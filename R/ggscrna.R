@@ -134,9 +134,13 @@ MergeMultiSeurat <- function(so_list, sampleIDs, reorder=FALSE) {
   if (reorder) {
     so_list <- so_list[sampleIDs]
   }
-  merge(x = so_list[[1]],
+  so <- merge(x = so_list[[1]],
         y = so_list[2:length(so_list)],
         add.cell.id = sampleIDs)
+  if (reorder) {
+    so@meta.data$sample <- factor(so@meta.data$sample, levels = sampleIDs)
+  }
+  so
 }
 
 #' QC metric distribution histogram
