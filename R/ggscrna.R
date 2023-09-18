@@ -35,7 +35,7 @@ GetSampleIDs <- function(samples_sheet, column) {
 #' @param min_cells Integer. The min.cells parameter of CreateSeuratObject
 #' @param min_features Integer. The min.features parameter of CreateSeuratObject
 #'
-#' @returns SeuratObject from the given count matrix.
+#' @return SeuratObject from the given count matrix.
 Counts2Seurat <- function(sampleID, data_dir_template,
                           counts_filename = "filtered_feature_bc_matrix.h5",
                           min_cells = 0, min_features = 0) {
@@ -111,7 +111,7 @@ SeuratReadMulti <- function(sampleIDs, data_dir_template,
 #' @param so_list List of Seurat objects
 #' @param sampleIDs List of strings, Sample IDs in the same order as in so_list
 #'
-#' @returns A Seurat object.
+#' @return A Seurat object.
 #'     The cell IDs get the sample name prefixed to their barcode.
 #'
 MergeMultiSeurat <- function(so_list, sampleIDs) {
@@ -119,3 +119,97 @@ MergeMultiSeurat <- function(so_list, sampleIDs) {
         y = so_list[2:length(so_list)],
         add.cell.id = sampleIDs)
 }
+
+#' QC metric distribution histogram
+#'
+#' An histogram plot of the distribution
+#' for one of the QC metrics in a Seurat object
+#'
+#' @param so Seurat object
+#' @param measure String. The name of the metric to plot
+#'
+#' @return A ggplot object
+#'
+QCDistriPlot <- function(so, measure) {
+  ggplot(so@meta.data, aes_string(x=measure)) +
+    geom_histogram(bins=100) +
+  ggtitle(paste(measure, "Distribution")) +
+  xlab(measure) + ylab("Frequency")  
+}
+
+#' Create and print several QC metrics plots
+#'
+#' Creates several QC metrics plots for a Seurat object
+#' and prints them to the screen
+#'
+#' @param so Seurat object
+#'
+MakeQCPlots <- function(so) {
+  plt <- so@meta.data %>% 
+    	ggplot(aes(x=sample, fill=sample)) + 
+    	geom_bar() +
+    	theme_classic() +
+    	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
+    	ggtitle("Number of cells")
+  print(plt)
+
+  plt <- so@meta.data %>% 
+    	ggplot(aes(color=sample, x=nUMI, fill= sample)) + 
+    	geom_density(alpha = 0.2) + 
+    	scale_x_log10() + 
+    	theme_classic() +
+    	ylab("Cell density") +
+    	geom_vline(xintercept = 100) +
+    	geom_vline(xintercept = 500) +
+    	geom_vline(xintercept = 1000)
+  print(plt)
+
+  plt <- so@meta.data  %>% 
+    	ggplot(aes(color=sample, x=nGene, fill= sample)) + 
+    	geom_density(alpha = 0.2) + 
+    	theme_classic() +
+    	scale_x_log10() + 
+    	geom_vline(xintercept = 300)
+  print(plt)
+
+  # Visualize the distribution of genes detected per cell via boxplot
+  plt <- so@meta.data  %>% 
+    	ggplot(aes(x=sample, y=log10(nGene), fill=sample)) + 
+    	geom_boxplot() + 
+    	theme_classic() +
+    	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
+    	ggtitle("NCells vs NGenes")
+  print(plt)
+
+  plt <- so@meta.data %>% 
+    	ggplot(aes(x=nUMI, y=nGene, color=mitoRatio)) + 
+    	geom_point() + 
+  	  scale_colour_gradient(low = "gray90", high = "black") +
+    	stat_smooth(method=lm) +
+    	scale_x_log10() + 
+    	scale_y_log10() + 
+    	theme_classic() +
+    	geom_vline(xintercept = 500) +
+    	geom_hline(yintercept = 250) +
+    	facet_wrap(~sample)
+    print(plt)
+
+  # Visualize the distribution of mit. gene expression detected per cell
+  plt <- so@meta.data %>% 
+    	ggplot(aes(color=sample, x=mitoRatio, fill=sample)) + 
+    	geom_density(alpha = 0.2) + 
+    	scale_x_log10() + 
+    	theme_classic() +
+    	geom_vline(xintercept = 0.2)
+  print(plt)
+
+  plt <- so@meta.data %>%
+    	ggplot(aes(x=log10GenesPerUMI, color = sample, fill=sample)) +
+    	geom_density(alpha = 0.2) +
+    	theme_classic() +
+    	geom_vline(xintercept = 0.8)
+  print(plt)
+}
+
