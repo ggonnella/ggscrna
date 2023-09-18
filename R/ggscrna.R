@@ -103,6 +103,20 @@ SeuratReadMulti <- function(sampleIDs, data_dir_template,
   so_list
 }
 
+#' Sample IDs ordered by number of cells
+#'
+#' Get the order of sample IDs according to the number of cells
+#' in the Seurat objects
+#'
+#' @param so_list List of Seurat objects
+#'
+#' @return Vector of strings. Sample IDs in the order of the number of cells
+#'
+SampleIdsByNCells <- function(so_list) {
+  so_list <- so_list[order(sapply(so_list, function(x) length(x$cells)))]
+  names(so_list)
+}
+
 #' Merge multiple Seurat objects
 #'
 #' Merges all Seurat objects in the given list into a single object.
