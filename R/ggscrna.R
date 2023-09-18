@@ -110,11 +110,16 @@ SeuratReadMulti <- function(sampleIDs, data_dir_template,
 #'
 #' @param so_list List of Seurat objects
 #' @param sampleIDs List of strings, Sample IDs in the same order as in so_list
+#' @param reorder Boolean. Whether to reorder the cells in the merged object
+#'        according to the order of the samples in sampleIDs
 #'
 #' @return A Seurat object.
 #'     The cell IDs get the sample name prefixed to their barcode.
 #'
-MergeMultiSeurat <- function(so_list, sampleIDs) {
+MergeMultiSeurat <- function(so_list, sampleIDs, reorder=FALSE) {
+  if (reorder) {
+    so_list <- so_list[sampleIDs]
+  }
   merge(x = so_list[[1]],
         y = so_list[2:length(so_list)],
         add.cell.id = sampleIDs)
@@ -195,7 +200,7 @@ MakeQCPlots <- function(so, batch_size=0) {
     	theme_classic() +
     	geom_vline(xintercept = 500) +
     	geom_hline(yintercept = 250) +
-    	facet_wrap(~sample)
+    	facet_wrap(~sample, nrow=batch_size)
     print(plt)
 
   # Visualize the distribution of mit. gene expression detected per cell
