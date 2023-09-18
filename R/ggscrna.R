@@ -144,7 +144,7 @@ QCDistriPlot <- function(so, measure) {
 #'
 #' @param so Seurat object
 #'
-MakeQCPlots <- function(so) {
+MakeQCPlots <- function(so, batch_size=0) {
   plt <- so@meta.data %>% 
     	ggplot(aes(x=sample, fill=sample)) + 
     	geom_bar() +
@@ -162,7 +162,8 @@ MakeQCPlots <- function(so) {
     	ylab("Cell density") +
     	geom_vline(xintercept = 100) +
     	geom_vline(xintercept = 500) +
-    	geom_vline(xintercept = 1000)
+    	geom_vline(xintercept = 1000) +
+      facet_wrap(~sample, nrow=batch_size)
   print(plt)
 
   plt <- so@meta.data  %>% 
@@ -170,7 +171,8 @@ MakeQCPlots <- function(so) {
     	geom_density(alpha = 0.2) + 
     	theme_classic() +
     	scale_x_log10() + 
-    	geom_vline(xintercept = 300)
+    	geom_vline(xintercept = 300) +
+      facet_wrap(~sample, nrow=batch_size)
   print(plt)
 
   # Visualize the distribution of genes detected per cell via boxplot
@@ -202,14 +204,16 @@ MakeQCPlots <- function(so) {
     	geom_density(alpha = 0.2) + 
     	scale_x_log10() + 
     	theme_classic() +
-    	geom_vline(xintercept = 0.2)
+    	geom_vline(xintercept = 0.2) +
+      facet_wrap(~sample, nrow=batch_size)
   print(plt)
 
   plt <- so@meta.data %>%
     	ggplot(aes(x=log10GenesPerUMI, color = sample, fill=sample)) +
     	geom_density(alpha = 0.2) +
     	theme_classic() +
-    	geom_vline(xintercept = 0.8)
+    	geom_vline(xintercept = 0.8) +
+      facet_wrap(~sample, nrow=batch_size)
   print(plt)
 }
 
