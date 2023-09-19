@@ -52,8 +52,6 @@ prepare_QC <- function(so) {
   so$mitoRatio <- PercentageFeatureSet(object = so, pattern = "^MT-")
   so$mitoRatio <- so@meta.data$mitoRatio / 100
   so$log10GenesPerUMI <- log10(so$nFeature_RNA) / log10(so$nCount_RNA)
-  so@meta.data <- so@meta.data %>%
-    dplyr::rename(nUMI = nCount_RNA, nGene = nFeature_RNA)
   so$cells <- rownames(so@meta.data)
   so
 }
@@ -181,56 +179,86 @@ qc_distri_plot <- function(so, measure) {
   xlab(measure) + ylab("Frequency")
 }
 
-#' Create and print several QC metrics plots
-#'
-#' Creates several QC metrics plots for a Seurat object
-#' and prints them to the screen
+
+#' Plot number of cells in different samples
 #'
 #' @param so Seurat object
 #'
-show_qc_plots <- function(so, plot_nrows=0) {
-  plt <- so@meta.data %>%
+histogram_n_cells <- function(so) {
+  so@meta.data %>%
     	ggplot(aes(x=sample, fill=sample)) +
     	geom_bar() +
     	theme_classic() +
-    	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
     	theme(plot.title = element_text(hjust=0.5, face="bold")) +
     	ggtitle("Number of cells")
-  print(plt)
+}
 
-  plt <- so@meta.data %>%
-    	ggplot(aes(color=sample, x=nUMI, fill= sample)) +
+#' Plot number of UMIs per cell in different samples
+#'
+#' @param so Seurat object
+#'
+density_plot_n_umis <- function(so, plot_nrows=0) {
+  so@meta.data %>%
+    	ggplot(aes(color=sample, x=nCount_RNA, fill=sample)) +
     	geom_density(alpha = 0.2) +
     	scale_x_log10() +
     	theme_classic() +
-    	ylab("Cell density") +
+    	ylab("cell density") +
     	geom_vline(xintercept = 100) +
     	geom_vline(xintercept = 500) +
     	geom_vline(xintercept = 1000) +
-      facet_wrap(~sample, nrow=plot_nrows)
-  print(plt)
+      facet_wrap(~sample, nrow=plot_nrows) +
+    	ggtitle("Number of UMIs per cell")
+}
 
-  plt <- so@meta.data  %>%
-    	ggplot(aes(color=sample, x=nGene, fill= sample)) +
+#' Boxplot of the number of UMIs per cell
+#'
+#' @param so Seurat object
+#'
+boxplot_n_umis <- function(so) {
+  so@meta.data %>%
+    	ggplot(aes(x=sample, y=log10(nCount_RNA), fill=sample)) +
+    	geom_boxplot() +
+    	theme_classic() +
+    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
+    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
+    	ggtitle("Number of UMIs per cell")
+}
+
+#' Plot number of genes per cell in different samples
+#'
+#' @param so Seurat object
+#'
+density_plot_n_genes <- function(so, plot_nrows=0) {
+  so@meta.data %>%
+    	ggplot(aes(color=sample, x=nFeature_RNA, fill=sample)) +
     	geom_density(alpha = 0.2) +
     	theme_classic() +
     	scale_x_log10() +
     	geom_vline(xintercept = 300) +
-      facet_wrap(~sample, nrow=plot_nrows)
-  print(plt)
+      facet_wrap(~sample, nrow=plot_nrows) +
+    	ggtitle("Number of genes per cell")
+}
 
-  # Visualize the distribution of genes detected per cell via boxplot
-  plt <- so@meta.data  %>%
-    	ggplot(aes(x=sample, y=log10(nGene), fill=sample)) +
+
+#' Boxplot of the number of genes per cell
+#'
+#' @param so Seurat object
+#'
+boxplot_n_genes <- function(so) {
+  so@meta.data %>%
+    	ggplot(aes(x=sample, y=log10(nFeature_RNA), fill=sample)) +
     	geom_boxplot() +
     	theme_classic() +
-    	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
     	theme(plot.title = element_text(hjust=0.5, face="bold")) +
-    	ggtitle("NCells vs NGenes")
-  print(plt)
+    	ggtitle("Number of genes per cell")
+}
 
-  plt <- so@meta.data %>%
-    	ggplot(aes(x=nUMI, y=nGene, color=mitoRatio)) +
+dotplot_n_umis_genes_mito <- function(so, plot_nrows=0) {
+  so@meta.data %>%
+    	ggplot(aes(x=nCount_RNA, y=nFeature_RNA, color=mitoRatio)) +
     	geom_point() +
   	  scale_colour_gradient(low = "gray90", high = "black") +
     	stat_smooth(method=lm) +
@@ -239,25 +267,46 @@ show_qc_plots <- function(so, plot_nrows=0) {
     	theme_classic() +
     	geom_vline(xintercept = 500) +
     	geom_hline(yintercept = 250) +
-    	facet_wrap(~sample, nrow=plot_nrows)
-    print(plt)
+    	facet_wrap(~sample, nrow=plot_nrows) +
+      ggtitle("N. UMIs vs N. genes and mit.genes ratio")
+}
 
-  # Visualize the distribution of mit. gene expression detected per cell
-  plt <- so@meta.data %>%
+density_plot_mito_ratio <- function(so, plot_nrows=0) {
+  so@meta.data %>%
     	ggplot(aes(color=sample, x=mitoRatio, fill=sample)) +
     	geom_density(alpha = 0.2) +
     	scale_x_log10() +
     	theme_classic() +
     	geom_vline(xintercept = 0.2) +
-      facet_wrap(~sample, nrow=plot_nrows)
-  print(plt)
+      facet_wrap(~sample, nrow=plot_nrows) +
+      ggtitle("Mitochondrial gene ratio per cell")
+}
 
-  plt <- so@meta.data %>%
-    	ggplot(aes(x=log10GenesPerUMI, color = sample, fill=sample)) +
+density_plot_complexity <- function(so, plot_nrows=0) {
+  so@meta.data %>%
+    	ggplot(aes(x=log10GenesPerUMI, color=sample, fill=sample)) +
     	geom_density(alpha = 0.2) +
     	theme_classic() +
     	geom_vline(xintercept = 0.8) +
-      facet_wrap(~sample, nrow=plot_nrows)
-  print(plt)
+      facet_wrap(~sample, nrow=plot_nrows) +
+      ggtitle("Transcriptional complexity")
+}
+
+#' Create and print several QC metrics plots
+#'
+#' Creates several QC metrics plots for a Seurat object
+#' and prints them to the screen
+#'
+#' @param so Seurat object
+#'
+show_qc_plots <- function(so, plot_nrows=0) {
+  print(histogram_n_cells(so))
+  print(density_plot_n_umis(so, plot_nrows))
+  print(boxplot_n_umis(so))
+  print(density_plot_n_genes(so, plot_nrows))
+  print(boxplot_n_genes(so))
+  print(density_plot_mito_ratio(so, plot_nrows))
+  print(dotplot_n_umis_genes_mito(so, plot_nrows))
+  print(density_plot_complexity(so, plot_nrows))
 }
 
