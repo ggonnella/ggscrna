@@ -1,3 +1,14 @@
+#'
+#' Helper functions for scRNA-seq analysis with Seurat
+#'
+
+# Licence: CC-BY-SA
+# (c) Giorgio Gonnella, 2023
+
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(glue)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -9,9 +20,9 @@
 #' @param column String. Column containing the sample IDs
 #' @return Vector of strings. IDs of the samples.
 #' @examples
-#' samples <- GetSampleIDs("~/project/samples.tsv", "PatientID")
+#'   samples <- get_sample_IDs("~/project/samples.tsv", "PatientID")
 #'
-GetSampleIDs <- function(samples_sheet, column) {
+get_sample_IDs <- function(samples_sheet, column) {
   header <- read.table(samples_sheet, sep="\t", header=FALSE,  nrows=1,
                        stringsAsFactors=FALSE, comment.char="")
   header <- gsub("^#", "", unlist(header))
@@ -20,13 +31,40 @@ GetSampleIDs <- function(samples_sheet, column) {
                                  colClasses = setNames("character", column))
   print(samples_metadata)
   samples <- subset(samples_metadata, select = c(column))
-  samples[[1]]
+  samples <- samples[[1]]
+  print(paste("Samples:", paste(samples, collapse=", ")))
+  samples
 }
+
+#' Compute additional metrics on the Seurat object
+#'
+#' The metrics are those explained in:
+#' https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
+#'
+#' ## Notes
+#' - mt genes computation by MT- prefix assumes this is a human dataset
+#'
+#' @param so SeuratObject for which to compute the metrics
+#'
+#' @return The SeuratObject, with additional metrics in ``@meta.data``
+#"         and renaming some of the default metrics.
+prepare_QC <- function(so) {
+  so$mitoRatio <- PercentageFeatureSet(object = so, pattern = "^MT-")
+  so$mitoRatio <- so@meta.data$mitoRatio / 100
+  so$log10GenesPerUMI <- log10(so$nFeature_RNA) / log10(so$nCount_RNA)
+  so@meta.data <- so@meta.data %>%
+    dplyr::rename(nUMI = nCount_RNA, nGene = nFeature_RNA)
+  so$cells <- rownames(so@meta.data)
+  so
+}
+
+DEFAULT_COUNTS_FILENAME <- "filtered_feature_bc_matrix.h5"
 
 #' Read Counts using Read10X_h5 and call CreateSeuratObject
 #'
 #' Streamlines reading from multiple directories under a common path
 #' containing the output of "Cellranger count" for different samples
+#' and adds further QC metrics to the seurat object
 #'
 #' @param sampleID String. Sample ID of the specific sample
 #' @param data_dir_template String. Path to the sample directory, where the
@@ -36,69 +74,42 @@ GetSampleIDs <- function(samples_sheet, column) {
 #' @param min_features Integer. The min.features parameter of CreateSeuratObject
 #'
 #' @return SeuratObject from the given count matrix.
-Counts2Seurat <- function(sampleID, data_dir_template,
-                          counts_filename = "filtered_feature_bc_matrix.h5",
+counts_to_seurat <- function(sampleID, data_dir_template,
+                          counts_filename = DEFAULT_COUNTS_FILENAME,
                           min_cells = 0, min_features = 0) {
   data_dir <- glue(data_dir_template)
   counts_fullpath <- paste0(data_dir, counts_filename)
-  print(counts_fullpath)
   data <- Read10X_h5(filename = counts_fullpath)
   so <- CreateSeuratObject(counts = data,
                            project = sampleID,
                            min.cells = min_cells,
                            min.features = min_features)
   rm(data)
-  so
-}
-
-#' Compute additional metrics on the Seurat object
-#'
-#' The metrics are those explained in:
-#' https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
-#'
-#' ## Notes
-#' - mt genes computation by MT- prefix assumes this is a human dataset,
-#'   hence the name
-#'
-#' @param so SeuratObject for which to compute the metrics
-#'
-#' @return The SeuratObject, with additional metrics in ``@meta.data``
-ComputeQCMetricsHuman <- function(so) {
-  so$mitoRatio <- PercentageFeatureSet(object = so, pattern = "^MT-")
-  so$mitoRatio <- so@meta.data$mitoRatio / 100
-  so$log10GenesPerUMI <- log10(so$nFeature_RNA) / log10(so$nCount_RNA)
-  so@meta.data <- so@meta.data %>%
-    dplyr::rename(nUMI = nCount_RNA,
-                  nGene = nFeature_RNA)
-  so$cells <- rownames(so@meta.data)
+  so <- prepare_QC(so)
   so
 }
 
 #' Create Seurat objects for multiple samples
 #'
-#' Creates multiple Seurat objects for a list of samples
-#' and adds further QC metrics to them
+#' the sample IDs are added in the meta.data as 'sample' column
 #'
 #' @param sampleIDs list of sampleIDs
-#' @param data_dir_template String. Path to the sample directory, where the
+#' @param input_dir_template String. Path to the sample directory, where the
 #'                          sample ID is given as '{sampleID}'
 #' @param counts_filename String. The filename containing the counts.
 #'
-#' @returns list of Seurat objects for each of the samples
+#' @return list of Seurat objects for each of the samples
 #'
-SeuratReadMulti <- function(sampleIDs, data_dir_template,
-                            counts_filename = "filtered_feature_bc_matrix.h5") {
+multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
+                                   counts_filename = DEFAULT_COUNTS_FILENAME) {
   so_list <- list()
-  so <- NULL
-  cell_id_pfx <- list()
-  print(samples)
   for (sampleID in samples) {
-    so <- Counts2Seurat(sampleID, data_dir_template, counts_filename)
-    so <- ComputeQCMetricsHuman(so)
-    #print(summary(so@meta.data))
-    so_list[[sampleID]] <- so
-    rm(so)
+    so_list[[sampleID]] <-
+      counts_to_seurat(sampleID, input_dir_template, counts_filename)
     so_list[[sampleID]]$sample <- sampleID
+    print(paste0("Created Seurat object for sample: '", sampleID,
+                 "' (n_cells: ", length(so_list[[sampleID]]$cells),
+                 ")"))
   }
   so_list
 }
@@ -112,33 +123,43 @@ SeuratReadMulti <- function(sampleIDs, data_dir_template,
 #'
 #' @return Vector of strings. Sample IDs in the order of the number of cells
 #'
-SampleIdsByNCells <- function(so_list) {
-  so_list <- so_list[order(sapply(so_list, function(x) length(x$cells)))]
-  names(so_list)
+get_n_cells_order <- function(so_list) {
+  so_list <- so_list[order(sapply(so_list, function(x) -length(x$cells)))]
+  result <- names(so_list)
+  print(paste("Sample IDs by decr. n_cells:",
+              paste(result, collapse=", ")))
+  result
 }
 
 #' Merge multiple Seurat objects
 #'
-#' Merges all Seurat objects in the given list into a single object.
-#' It is a wrapper for the merge function of SeuratObject.
+#' Merges all Seurat objects in the given list into a single object. using the
+#' merge function of SeuratObject. Optionally the sample IDs are reordered. By
+#' default the memory of the input list of objects is freed.
 #'
 #' @param so_list List of Seurat objects
-#' @param sampleIDs List of strings, Sample IDs in the same order as in so_list
-#' @param reorder Boolean. Whether to reorder the cells in the merged object
-#'        according to the order of the samples in sampleIDs
+#' @param order Vector of strings. Order of the samples in the merged object.
+#'              Defaults to the order of the samples in the list.
+#' @param freemem Boolean. Whether to free the memory of the input objects
 #'
 #' @return A Seurat object.
-#'     The cell IDs get the sample name prefixed to their barcode.
+#'     The cell IDs get the sample IDs prefixed to their barcode.
+#'     The sample IDs are transformed into factors to keep their order in plots.
 #'
-MergeMultiSeurat <- function(so_list, sampleIDs, reorder=FALSE) {
-  if (reorder) {
-    so_list <- so_list[sampleIDs]
+merge_seurat_list <- function(so_list, order=NULL, freemem=TRUE) {
+  if (is.null(order)) {
+    sampleIDs <- names(so_list)
+  }
+  else {
+    so_list <- so_list[order]
+    sampleIDs <- order
   }
   so <- merge(x = so_list[[1]],
-        y = so_list[2:length(so_list)],
-        add.cell.id = sampleIDs)
-  if (reorder) {
-    so@meta.data$sample <- factor(so@meta.data$sample, levels = sampleIDs)
+              y = so_list[2:length(so_list)],
+              add.cell.id = sampleIDs)
+  so@meta.data$sample <- factor(so@meta.data$sample, levels = sampleIDs)
+  if (freemem) {
+    rm(so_list)
   }
   so
 }
@@ -153,11 +174,11 @@ MergeMultiSeurat <- function(so_list, sampleIDs, reorder=FALSE) {
 #'
 #' @return A ggplot object
 #'
-QCDistriPlot <- function(so, measure) {
+qc_distri_plot <- function(so, measure) {
   ggplot(so@meta.data, aes_string(x=measure)) +
     geom_histogram(bins=100) +
   ggtitle(paste(measure, "Distribution")) +
-  xlab(measure) + ylab("Frequency")  
+  xlab(measure) + ylab("Frequency")
 }
 
 #' Create and print several QC metrics plots
@@ -167,9 +188,9 @@ QCDistriPlot <- function(so, measure) {
 #'
 #' @param so Seurat object
 #'
-MakeQCPlots <- function(so, batch_size=0) {
-  plt <- so@meta.data %>% 
-    	ggplot(aes(x=sample, fill=sample)) + 
+show_qc_plots <- function(so, plot_nrows=0) {
+  plt <- so@meta.data %>%
+    	ggplot(aes(x=sample, fill=sample)) +
     	geom_bar() +
     	theme_classic() +
     	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
@@ -177,58 +198,58 @@ MakeQCPlots <- function(so, batch_size=0) {
     	ggtitle("Number of cells")
   print(plt)
 
-  plt <- so@meta.data %>% 
-    	ggplot(aes(color=sample, x=nUMI, fill= sample)) + 
-    	geom_density(alpha = 0.2) + 
-    	scale_x_log10() + 
+  plt <- so@meta.data %>%
+    	ggplot(aes(color=sample, x=nUMI, fill= sample)) +
+    	geom_density(alpha = 0.2) +
+    	scale_x_log10() +
     	theme_classic() +
     	ylab("Cell density") +
     	geom_vline(xintercept = 100) +
     	geom_vline(xintercept = 500) +
     	geom_vline(xintercept = 1000) +
-      facet_wrap(~sample, nrow=batch_size)
+      facet_wrap(~sample, nrow=plot_nrows)
   print(plt)
 
-  plt <- so@meta.data  %>% 
-    	ggplot(aes(color=sample, x=nGene, fill= sample)) + 
-    	geom_density(alpha = 0.2) + 
+  plt <- so@meta.data  %>%
+    	ggplot(aes(color=sample, x=nGene, fill= sample)) +
+    	geom_density(alpha = 0.2) +
     	theme_classic() +
-    	scale_x_log10() + 
+    	scale_x_log10() +
     	geom_vline(xintercept = 300) +
-      facet_wrap(~sample, nrow=batch_size)
+      facet_wrap(~sample, nrow=plot_nrows)
   print(plt)
 
   # Visualize the distribution of genes detected per cell via boxplot
-  plt <- so@meta.data  %>% 
-    	ggplot(aes(x=sample, y=log10(nGene), fill=sample)) + 
-    	geom_boxplot() + 
+  plt <- so@meta.data  %>%
+    	ggplot(aes(x=sample, y=log10(nGene), fill=sample)) +
+    	geom_boxplot() +
     	theme_classic() +
     	theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     	theme(plot.title = element_text(hjust=0.5, face="bold")) +
     	ggtitle("NCells vs NGenes")
   print(plt)
 
-  plt <- so@meta.data %>% 
-    	ggplot(aes(x=nUMI, y=nGene, color=mitoRatio)) + 
-    	geom_point() + 
+  plt <- so@meta.data %>%
+    	ggplot(aes(x=nUMI, y=nGene, color=mitoRatio)) +
+    	geom_point() +
   	  scale_colour_gradient(low = "gray90", high = "black") +
     	stat_smooth(method=lm) +
-    	scale_x_log10() + 
-    	scale_y_log10() + 
+    	scale_x_log10() +
+    	scale_y_log10() +
     	theme_classic() +
     	geom_vline(xintercept = 500) +
     	geom_hline(yintercept = 250) +
-    	facet_wrap(~sample, nrow=batch_size)
+    	facet_wrap(~sample, nrow=plot_nrows)
     print(plt)
 
   # Visualize the distribution of mit. gene expression detected per cell
-  plt <- so@meta.data %>% 
-    	ggplot(aes(color=sample, x=mitoRatio, fill=sample)) + 
-    	geom_density(alpha = 0.2) + 
-    	scale_x_log10() + 
+  plt <- so@meta.data %>%
+    	ggplot(aes(color=sample, x=mitoRatio, fill=sample)) +
+    	geom_density(alpha = 0.2) +
+    	scale_x_log10() +
     	theme_classic() +
     	geom_vline(xintercept = 0.2) +
-      facet_wrap(~sample, nrow=batch_size)
+      facet_wrap(~sample, nrow=plot_nrows)
   print(plt)
 
   plt <- so@meta.data %>%
@@ -236,7 +257,7 @@ MakeQCPlots <- function(so, batch_size=0) {
     	geom_density(alpha = 0.2) +
     	theme_classic() +
     	geom_vline(xintercept = 0.8) +
-      facet_wrap(~sample, nrow=batch_size)
+      facet_wrap(~sample, nrow=plot_nrows)
   print(plt)
 }
 
