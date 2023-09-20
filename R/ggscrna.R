@@ -101,7 +101,7 @@ counts_to_seurat <- function(sampleID, data_dir_template,
 multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
                                    counts_filename = DEFAULT_COUNTS_FILENAME) {
   so_list <- list()
-  for (sampleID in samples) {
+  for (sampleID in sampleIDs) {
     so_list[[sampleID]] <-
       counts_to_seurat(sampleID, input_dir_template, counts_filename)
     so_list[[sampleID]]$sample <- sampleID
