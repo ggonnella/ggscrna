@@ -9,6 +9,7 @@ library(Seurat)
 library(dplyr)
 library(ggplot2)
 library(glue)
+library(knitr)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -308,5 +309,16 @@ show_qc_plots <- function(so, plot_nrows=0) {
   print(density_plot_mito_ratio(so, plot_nrows))
   print(dotplot_n_umis_genes_mito(so, plot_nrows))
   print(density_plot_complexity(so, plot_nrows))
+}
+
+#' Include a Rmd file in another
+#'
+#' @param file Filename of the file to be included
+#'
+source_rmd <- function(file, ...) {
+  tmp_file <= tempfile(fileext = ".R")
+  on.exit(unlink(tmp_file), add = TRUE)
+  knitr::purl(file, output = tmp_file)
+  source(file <- tmp_file, ...)
 }
 
