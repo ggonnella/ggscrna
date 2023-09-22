@@ -93,6 +93,11 @@ counts_to_seurat <- function(sampleID, data_dir_template,
   so
 }
 
+#' Add QC information from scater library to Seurat object
+#'
+#' @param so Seurat object
+#'
+#' @return Seurat object with additional QC metrics
 scater_qc <- function(so) {
   library(scater)
   sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
@@ -115,6 +120,11 @@ scater_qc <- function(so) {
   so
 }
 
+#' Add QC information from robustbase library to Seurat object
+#'
+#' @param so Seurat object
+#'
+#' @return Seurat object with additional QC metrics
 robustbase_qc <- function(so) {
   library(robustbase)
   set.seed(1234)
