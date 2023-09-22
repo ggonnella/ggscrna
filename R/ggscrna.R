@@ -13,7 +13,7 @@ library(knitr)
 library(reshape2)
 library(RColorBrewer)
 library(ggsci)
-library(matrixstats)
+library(matrixStats)
 
 #' Get sample IDs from a sample sheet
 #'
