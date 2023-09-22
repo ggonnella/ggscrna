@@ -153,8 +153,8 @@ id_cc_phase <- function(so) {
   so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
                              nfeatures = 2000, verbose = FALSE)
   so <- ScaleData(so, assay = "RNA", verbose = FALSE)
-  so <- RunPCA(so, features = VariableFeatures(object = so, assay = "RNA"),
-               verbose = FALSE)
+  so <- RunPCA(so, assay = "RNA", reduction.name = "pcaRNA",
+               reduction.key = "pcaRNA_", verbose = FALSE)
   ccg_colors <-
     RColorBrewer::brewer.pal(length(levels(so$Phase)), name = "Set1")
   plot(DimPlot(so, reduction = "pcaRNA", group.by= "Phase", cols = ccg_colors))
