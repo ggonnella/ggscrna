@@ -356,6 +356,10 @@ get_step_dir <- function(steps_dir, step_n) {
 #'
 #' @return A ggplot object
 h_expr_genes_plot <- function(so, n_genes = 30, sample = NULL) {
+  library(reshape2)
+  library(RColorBrewer)
+  library(ggsci)
+  library(matrixStats)
   count_matrix <- as.matrix(so@assays$RNA@counts)
   if (!is.null(sample)) {
     count_matrix <- count_matrix[, grepl(sample, colnames(count_matrix))]
