@@ -4,12 +4,14 @@
 \alias{h_expr_genes_plot}
 \title{Plot the highest expressed genes}
 \usage{
-h_expr_genes_plot(so, n_genes = 30)
+h_expr_genes_plot(so, n_genes = 10, sample = NULL)
 }
 \arguments{
 \item{so}{Seurat object}
 
 \item{n_genes}{Integer. Number of genes to plot}
+
+\item{sample}{String. Keep only specified sample. Default: keep all.}
 }
 \value{
 A ggplot object

@@ -92,6 +92,22 @@ counts_to_seurat <- function(sampleID, data_dir_template,
   so
 }
 
+scater_qc <- function(so) {
+  library(scater)
+  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+}
+
+robustbase_qc <- function(so) {
+  library(robustbase)
+  set.seed(1234)
+  stats <- cbind(log10(so$nCount_RNA), log10(so$nFeature_RNA), so$mitoRatio)
+  outlying <- adjOutlyingness(stats, only.outlyingness = TRUE)
+  multi.outlier <- isOutlier(outlying, type = "higher")
+  summary(multi.outlier)
+  so@meta.data <- cbind(so@meta.data, multi.outlier)
+  so
+}
+
 #' Create Seurat objects for multiple samples
 #'
 #' the sample IDs are added in the meta.data as 'sample' column
@@ -110,6 +126,7 @@ multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
     so_list[[sampleID]] <-
       counts_to_seurat(sampleID, input_dir_template, counts_filename)
     so_list[[sampleID]]$sample <- sampleID
+    so_list[[sampleID]] <- robustbase_qc(so_list[[sampleID]])
     print(paste0("Created Seurat object for sample: '", sampleID,
                  "' (n_cells: ", length(so_list[[sampleID]]$cells),
                  ")"))
