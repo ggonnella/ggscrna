@@ -10,9 +10,10 @@ library(dplyr)
 library(ggplot2)
 library(glue)
 library(knitr)
-require(reshape2)
-require(RColorBrewer)
-require(ggsci)
+library(reshape2)
+library(RColorBrewer)
+library(ggsci)
+library(matrixstats)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -345,7 +346,6 @@ get_step_dir <- function(steps_dir, step_n) {
   paste0(steps_dir, "/", matching_files[1], "/")
 }
 
-
 #' Plot the highest expressed genes
 #'
 #' based on a similar function by Sebastien Mella
@@ -356,7 +356,7 @@ get_step_dir <- function(steps_dir, step_n) {
 #' @return A ggplot object
 h_expr_genes_plot <- function(so, n_genes = 30) {
   count_matrix <- as.matrix(so@assays$RNA@counts)
-  values <- head(order(rowSums2(count_matrix), decreasing = TRUE), n_genes)
+  values <- head(order(rowSums(count_matrix), decreasing = TRUE), n_genes)
   sub_mat <- as.data.frame(count_matrix[values, ])
   sub_mat$feature <- factor(rownames(sub_mat), levels = rev(rownames(sub_mat)))
   sub_mat_long_fmt <- melt(sub_mat, id.vars = "feature")
