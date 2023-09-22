@@ -365,5 +365,5 @@ h_expr_genes_plot <- function(so, n_genes = 30) {
   ggplot(sub_mat_long_fmt, aes(x = value, y = feature))+
     geom_boxplot(aes(fill = feature), alpha = .75) +
     scale_fill_manual(values = plot_colors) + theme_light() +
-    guides(fill=FALSE) + xlab("Count")
+    guides(fill="none") + xlab("Count")
 }
