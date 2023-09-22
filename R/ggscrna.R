@@ -14,6 +14,7 @@ library(reshape2)
 library(RColorBrewer)
 library(ggsci)
 library(matrixStats)
+library(scater)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -95,6 +96,26 @@ counts_to_seurat <- function(sampleID, data_dir_template,
 scater_qc <- function(so) {
   library(scater)
   sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+  is_mito <- grep("^MT-", rownames(sce))
+  qcstats <- perCellQCMetrics(sce, subsets=list(Mito=is_mito))
+  filt_ad <- data.frame(
+    qc.lib.low = isOutlier(qcstats$sum, log = TRUE, type = "lower"),
+    qc.lib.high = isOutlier(qcstats$sum,
+                            log = FALSE, type = "higher", nmads = 4),
+    qc.nexpr.low = isOutlier(qcstats$detected, log = TRUE, type = "lower"),
+    qc.nexpr.high = isOutlier(qcstats$detected,
+                              log = FALSE, type = "higher", nmads = 4),
+    qc.mito.high = isOutlier(qcstats$subsets_Mito_percent,
+                             log = FALSE, type = "higher")
+  )
+  qcstats <- cbind(qcstats, filt_ad)
+  summary(qcstats)
+  print(nGene_th)
+  print(nUMI_th)
+  print(nMito_th)
+  names(qcstats) <- paste0("scater_", names(qcstats))
+  so@meta.data <- cbind(so@meta.data, qcstats)
+  so
 }
 
 robustbase_qc <- function(so) {
@@ -126,6 +147,7 @@ multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
     so_list[[sampleID]] <-
       counts_to_seurat(sampleID, input_dir_template, counts_filename)
     so_list[[sampleID]]$sample <- sampleID
+    so_list[[sampleID]] <- scater_qc(so_list[[sampleID]])
     so_list[[sampleID]] <- robustbase_qc(so_list[[sampleID]])
     print(paste0("Created Seurat object for sample: '", sampleID,
                  "' (n_cells: ", length(so_list[[sampleID]]$cells),
