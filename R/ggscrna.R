@@ -136,6 +136,33 @@ robustbase_qc <- function(so) {
   so
 }
 
+#' Identify cell cycle phases
+#'
+#' derived from a function of Sebastien Mella
+#'
+id_cc_phase <- function(so) {
+  s_genes = cc.genes.updated.2019$s.genes
+  g2m_genes = cc.genes.updated.2019$g2m.genes
+  s_genes_table <- as.data.frame(table(s_genes %in% rownames(so)))
+  g2m_genes_table <- as.data.frame(table(g2m_genes %in% rownames(so)))
+  so <- NormalizeData(so, assay = "RNA")
+  so <- CellCycleScoring(so, s.features = s_genes[s_genes %in% rownames(so)],
+                         g2m.features = g2m_genes[g2m_genes %in% rownames(so)])
+  ccp_df <- as.data.frame.array(table(so$Phase))
+  ccp_df$phase <- rownames(ccp_df)
+  so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
+                             nfeatures = 2000, verbose = FALSE)
+  so <- ScaleData(so, assay = "RNA", verbose = FALSE)
+  so <- RunPCA(so, features = VariableFeatures(object = so, assay = "RNA"),
+               verbose = FALSE)
+  ccg_colors <-
+    RColorBrewer::brewer.pal(length(levels(so$Phase)), name = "Set1")
+  plot(DimPlot(so, reduction = "pcaRNA", group.by= "Phase", cols = ccg_colors))
+  plot(DimPlot(so, reduction = "pcaRNA", group.by= "Phase", split.by = "Phase",
+               cols = ccg_colors))
+  so
+}
+
 #' Create Seurat objects for multiple samples
 #'
 #' the sample IDs are added in the meta.data as 'sample' column
@@ -156,6 +183,7 @@ multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
     so_list[[sampleID]]$sample <- sampleID
     so_list[[sampleID]] <- scater_qc(so_list[[sampleID]])
     so_list[[sampleID]] <- robustbase_qc(so_list[[sampleID]])
+    so_list[[sampleID]] <- id_cc_phase(so_list[[sampleID]])
     print(paste0("Created Seurat object for sample: '", sampleID,
                  "' (n_cells: ", length(so_list[[sampleID]]$cells),
                  ")"))
