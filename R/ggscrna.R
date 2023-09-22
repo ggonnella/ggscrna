@@ -352,11 +352,15 @@ get_step_dir <- function(steps_dir, step_n) {
 #'
 #' @param so Seurat object
 #' @param n_genes Integer. Number of genes to plot
+#' @param sample String. Keep only specified sample. Default: keep all.
 #'
 #' @return A ggplot object
-h_expr_genes_plot <- function(so, n_genes = 30) {
+h_expr_genes_plot <- function(so, n_genes = 30, sample = NULL) {
   count_matrix <- as.matrix(so@assays$RNA@counts)
-  values <- head(order(rowSums(count_matrix), decreasing = TRUE), n_genes)
+  if (!is.null(sample)) {
+    count_matrix <- count_matrix[, grepl(sample, colnames(count_matrix))]
+  }
+  values <- head(order(rowSums2(count_matrix), decreasing = TRUE), n_genes)
   sub_mat <- as.data.frame(count_matrix[values, ])
   sub_mat$feature <- factor(rownames(sub_mat), levels = rev(rownames(sub_mat)))
   sub_mat_long_fmt <- melt(sub_mat, id.vars = "feature")
