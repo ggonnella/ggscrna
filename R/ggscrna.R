@@ -110,9 +110,6 @@ scater_qc <- function(so) {
   )
   qcstats <- cbind(qcstats, filt_ad)
   summary(qcstats)
-  print(nGene_th)
-  print(nUMI_th)
-  print(nMito_th)
   names(qcstats) <- paste0("scater_", names(qcstats))
   so@meta.data <- cbind(so@meta.data, qcstats)
   so
