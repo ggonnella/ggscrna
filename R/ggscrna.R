@@ -355,14 +355,16 @@ get_step_dir <- function(steps_dir, step_n) {
 #' @param sample String. Keep only specified sample. Default: keep all.
 #'
 #' @return A ggplot object
-h_expr_genes_plot <- function(so, n_genes = 30, sample = NULL) {
+h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
   library(reshape2)
   library(RColorBrewer)
   library(ggsci)
   library(matrixStats)
+  title <- "Highest expressed genes"
   count_matrix <- as.matrix(so@assays$RNA@counts)
   if (!is.null(sample)) {
     count_matrix <- count_matrix[, grepl(sample, colnames(count_matrix))]
+    title <- paste0(title, " (Sample ", sample, ")")
   }
   values <- head(order(rowSums2(count_matrix), decreasing = TRUE), n_genes)
   sub_mat <- as.data.frame(count_matrix[values, ])
@@ -373,5 +375,5 @@ h_expr_genes_plot <- function(so, n_genes = 30, sample = NULL) {
   ggplot(sub_mat_long_fmt, aes(x = value, y = feature))+
     geom_boxplot(aes(fill = feature), alpha = .75) +
     scale_fill_manual(values = plot_colors) + theme_light() +
-    guides(fill="none") + xlab("Count")
+    guides(fill="none") + xlab("Count") + ylab("Gene") + ggtitle(title)
 }
