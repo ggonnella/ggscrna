@@ -169,6 +169,7 @@ plot_cc_phase <- function(so, sample = NULL) {
   if (!is.null(sample)) {
     so <- subset(so, sample == sample)
   }
+  so$Phase = as.factor(so$Phase)
   ccp_df <- as.data.frame.array(table(so$Phase))
   ccp_df$phase <- rownames(ccp_df)
   so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
