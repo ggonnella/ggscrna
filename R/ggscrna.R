@@ -165,7 +165,10 @@ id_cc_phase <- function(so, genes = cc.genes.updated.2019) {
 #'
 #' derived from a function of Sebastien Mella
 #'
-plot_cc_phase <- function(so) {
+plot_cc_phase <- function(so, sample = NULL) {
+  if (!is.null(sample)) {
+    so <- subset(so, sample == sample)
+  }
   ccp_df <- as.data.frame.array(table(so$Phase))
   ccp_df$phase <- rownames(ccp_df)
   so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
