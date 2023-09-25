@@ -485,6 +485,7 @@ assign_cell_types <- function(so) {
   library(SingleR)
   library(scater)
   library(celldex)
+  library(RColorBrewer)
   ref <- celldex::MonacoImmuneData()
   sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
   sce <- scater::logNormCounts(sce)
