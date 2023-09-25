@@ -140,14 +140,32 @@ robustbase_qc <- function(so) {
 #'
 #' derived from a function of Sebastien Mella
 #'
-id_cc_phase <- function(so) {
-  s_genes = cc.genes.updated.2019$s.genes
-  g2m_genes = cc.genes.updated.2019$g2m.genes
+#' @param so Seurat object
+#' @param genes List of genes for cell cycle scoring
+#'
+#' @return Seurat object with additional columns 'Phase', 'S.Score'
+#'         and 'G2M.Score'
+#'
+id_cc_phase <- function(so, genes = cc.genes.updated.2019) {
+  s_genes = genes$s.genes
+  g2m_genes = genes$g2m.genes
   s_genes_table <- as.data.frame(table(s_genes %in% rownames(so)))
   g2m_genes_table <- as.data.frame(table(g2m_genes %in% rownames(so)))
-  so <- NormalizeData(so, assay = "RNA")
-  so <- CellCycleScoring(so, s.features = s_genes[s_genes %in% rownames(so)],
-                         g2m.features = g2m_genes[g2m_genes %in% rownames(so)])
+  so_norm <- NormalizeData(so, assay = "RNA")
+  so_norm <- CellCycleScoring(so_norm,
+                    s.features = s_genes[s_genes %in% rownames(so_norm)],
+                    g2m.features = g2m_genes[g2m_genes %in% rownames(so_norm)])
+  so$Phase <- so_norm$Phase
+  so$S.Score <- so_norm$S.Score
+  so$G2M.Score <- so_norm$G2M.Score
+  so
+}
+
+#' Plot cell cycle phases
+#'
+#' derived from a function of Sebastien Mella
+#'
+plot_cc_phase <- function(so) {
   ccp_df <- as.data.frame.array(table(so$Phase))
   ccp_df$phase <- rownames(ccp_df)
   so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
@@ -157,10 +175,10 @@ id_cc_phase <- function(so) {
                reduction.key = "pcaRNA_", verbose = FALSE)
   ccg_colors <-
     RColorBrewer::brewer.pal(length(levels(so$Phase)), name = "Set1")
-  plot(DimPlot(so, reduction = "pcaRNA", group.by= "Phase", cols = ccg_colors))
-  plot(DimPlot(so, reduction = "pcaRNA", group.by= "Phase", split.by = "Phase",
-               cols = ccg_colors))
-  so
+  plt1 = DimPlot(so, reduction = "pcaRNA", group.by= "Phase", cols = ccg_colors)
+  plt2 = DimPlot(so, reduction = "pcaRNA", group.by= "Phase", split.by = "Phase",
+                 cols = ccg_colors)
+  gridExtra::grid.arrange(plt1, plt2, ncol = 2)
 }
 
 #' Create Seurat objects for multiple samples
