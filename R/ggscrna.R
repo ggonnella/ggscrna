@@ -155,7 +155,7 @@ id_cc_phase <- function(so, genes = cc.genes.updated.2019) {
   so_norm <- CellCycleScoring(so_norm,
                     s.features = s_genes[s_genes %in% rownames(so_norm)],
                     g2m.features = g2m_genes[g2m_genes %in% rownames(so_norm)])
-  so$Phase <- so_norm$Phase
+  so$Phase <- as.factor(so_norm$Phase)
   so$S.Score <- so_norm$S.Score
   so$G2M.Score <- so_norm$G2M.Score
   so
