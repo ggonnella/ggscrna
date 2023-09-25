@@ -489,7 +489,15 @@ assign_cell_types <- function(so) {
   sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
   sce <- scater::logNormCounts(sce)
   for (predtype in c("fine", "main")) {
-    pred <- SingleR(test = sce, ref = ref, labels = ref$label[[predtype]],
+    if (predtype == "fine") {
+      lbls <- ref$label.fine
+    } else {
+      lbls <- ref$label.main
+    }
+    print(predtype)
+    print(summary(lbls))
+    table(lbls)
+    pred <- SingleR(test = sce, ref = ref, labels = lbls,
                     assay.type.test = "logcounts")
     print(table(pred$labels, exclude=NULL))
     print(plotScoreHeatmap(pred, show.pruned = TRUE))
@@ -500,7 +508,7 @@ assign_cell_types <- function(so) {
                   unique(pred$labels)])
     pred_tab$pruned.labels <- pred$pruned.labels
     colnames(pred_tab) <- paste(colnames(pred_tab),
-                                   "singleR_", predtype, sep = "_")
+                                   "singleR", predtype, sep = "_")
     rownames(pred_tab) <- rownames(pred)
     so@meta.data <- cbind(so@meta.data, pred_tab)
     lbl <- paste0("pruned.labels_singleR_", predtype)
