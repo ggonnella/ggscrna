@@ -473,3 +473,46 @@ h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
     scale_fill_manual(values = plot_colors) + theme_light() +
     guides(fill="none") + xlab("Count") + ylab("Gene") + ggtitle(title)
 }
+
+#' Cell type assignment using SingleR
+#'
+#' @param so Seurat object
+#'
+#' @return Seurat object with additional columns 'SingleR.best_hit',
+#'         'SingleR.best_score' and 'SingleR.best_match'
+#'
+assign_cell_types <- function(so) {
+  library(SingleR)
+  library(scater)
+  library(celldex)
+  ref <- celldex::MonacoImmuneData()
+  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+  sce <- scater::logNormCounts(sce)
+  for (predtype in c("fine", "main")) {
+    pred <- SingleR(test = sce, ref = ref, labels = ref$label[[predtype]],
+                    assay.type.test = "logcounts")
+    print(table(pred$labels, exclude=NULL))
+    print(plotScoreHeatmap(pred, show.pruned = TRUE))
+    ncol <- length(unique(pred$labels))
+    ncol <- round(ncol/2, digits = 0)
+    print(plotDeltaDistribution(pred, size = .5, ncol = ncol))
+    pred_tab <- as.data.frame(pred$scores[, colnames(pred$scores) %in%
+                  unique(pred$labels)])
+    pred_tab$pruned.labels <- pred$pruned.labels
+    colnames(pred_tab) <- paste(colnames(pred_tab),
+                                   "singleR_", predtype, sep = "_")
+    rownames(pred_tab) <- rownames(pred)
+    so@meta.data <- cbind(so@meta.data, pred_tab)
+    lbl <- paste0("pruned.labels_singleR_", predtype)
+    so[[lbl]][ is.na(so[[lbl]])] <- "unchar"
+    sort(table(so[[lbl]]), decreasing = TRUE)
+    lev <- names(sort(table(so[[lbl]]), decreasing = TRUE))
+    lev <- c(lev[-which(lev == "unchar")], "unchar")
+    so[[lbl]] <- factor(so[[lbl]], levels = lev)
+    palette <-
+      colorRampPalette(brewer.pal(8, "Set3"))(length(unique(so[[lbl]])))
+    print(VlnPlot(so, features = c("CD74", "CD3E", "CD3D", "CD3G"),
+                  cols = palette, assay = "RNA", ncol = 4, group.by = lbl))
+  }
+  so
+}

@@ -4,7 +4,7 @@
 \alias{plot_cc_phase}
 \title{Plot cell cycle phases}
 \usage{
-plot_cc_phase(so)
+plot_cc_phase(so, sample = NULL)
 }
 \description{
 derived from a function of Sebastien Mella
