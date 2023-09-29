@@ -15,6 +15,8 @@ library(RColorBrewer)
 library(ggsci)
 library(matrixStats)
 library(scater)
+library(SingleR)
+library(celldex)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -483,6 +485,45 @@ h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
 #'         'SingleR.best_score' and 'SingleR.best_match'
 #'
 assign_cell_types <- function(so) {
+  ref <- celldex::MonacoImmuneData()
+  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+  sce <- scater::logNormCounts(sce)
+  for (predtype in c("fine", "main")) {
+    if (predtype == "fine") {
+      lbls <- ref$label.fine
+    } else {
+      lbls <- ref$label.main
+    }
+    pred <- SingleR(test = sce, ref = ref, labels = lbls,
+                    assay.type.test = "logcounts")
+    ncol <- length(unique(pred$labels))
+    ncol <- round(ncol/2, digits = 0)
+    pred_tab <- as.data.frame(pred$scores[, colnames(pred$scores) %in%
+                  unique(pred$labels)])
+    pred_tab$pruned.labels <- pred$pruned.labels
+    colnames(pred_tab) <- paste(colnames(pred_tab),
+                                   "singleR", predtype, sep = "_")
+    rownames(pred_tab) <- rownames(pred)
+    so@meta.data <- cbind(so@meta.data, pred_tab)
+    lbl <- paste0("pruned.labels_singleR_", predtype)
+    so[[lbl]][ is.na(so[[lbl]])] <- "unchar"
+    sort(table(so[[lbl]]), decreasing = TRUE)
+    lev <- names(sort(table(so[[lbl]]), decreasing = TRUE))
+    lev <- c(lev[-which(lev == "unchar")], "unchar")
+    so[[lbl]] <- factor(so[[lbl]], levels = lev)
+  }
+  so
+}
+
+#' Verbose Cell type assignment using SingleR
+#' (produces all outputs which were contained in the original code by S. Mella)
+#'
+#' @param so Seurat object
+#'
+#' @return Seurat object with additional columns 'SingleR.best_hit',
+#'         'SingleR.best_score' and 'SingleR.best_match'
+#'
+assign_cell_types_V <- function(so) {
   library(SingleR)
   library(scater)
   library(celldex)
