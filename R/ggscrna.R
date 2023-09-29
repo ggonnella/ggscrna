@@ -17,6 +17,7 @@ library(matrixStats)
 library(scater)
 library(SingleR)
 library(celldex)
+library(SingleCellExperiment)
 
 #' Get sample IDs from a sample sheet
 #'
