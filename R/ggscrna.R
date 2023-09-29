@@ -511,7 +511,7 @@ assign_cell_types <- function(so) {
     lev <- names(sort(table(so[[lbl]]), decreasing = TRUE))
     lev <- c(lev[-which(lev == "unchar")], "unchar")
     so_vector <- as.vector(so[[lbl]][,1])
-    so$meta.data[[lbl]] <- factor(so_vector, levels = lev)
+    so@meta.data[[lbl]] <- factor(so_vector, levels = lev)
   }
   so
 }
