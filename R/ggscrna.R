@@ -497,74 +497,21 @@ assign_cell_types <- function(so) {
     }
     pred <- SingleR(test = sce, ref = ref, labels = lbls,
                     assay.type.test = "logcounts")
-    ncol <- length(unique(pred$labels))
-    ncol <- round(ncol/2, digits = 0)
     pred_tab <- as.data.frame(pred$scores[, colnames(pred$scores) %in%
                   unique(pred$labels)])
     pred_tab$pruned.labels <- pred$pruned.labels
     colnames(pred_tab) <- paste(colnames(pred_tab),
                                    "singleR", predtype, sep = "_")
     rownames(pred_tab) <- rownames(pred)
+    non_pred_cols <- setdiff(colnames(so@meta.data), colnames(pred_tab))
+    so@meta.data <- so@meta.data[, non_pred_cols]
     so@meta.data <- cbind(so@meta.data, pred_tab)
     lbl <- paste0("pruned.labels_singleR_", predtype)
-    so[[lbl]][ is.na(so[[lbl]])] <- "unchar"
-    sort(table(so[[lbl]]), decreasing = TRUE)
+    so[[lbl]][is.na(so[[lbl]])] <- "unchar"
     lev <- names(sort(table(so[[lbl]]), decreasing = TRUE))
     lev <- c(lev[-which(lev == "unchar")], "unchar")
-    so[[lbl]] <- factor(so[[lbl]], levels = lev)
-  }
-  so
-}
-
-#' Verbose Cell type assignment using SingleR
-#' (produces all outputs which were contained in the original code by S. Mella)
-#'
-#' @param so Seurat object
-#'
-#' @return Seurat object with additional columns 'SingleR.best_hit',
-#'         'SingleR.best_score' and 'SingleR.best_match'
-#'
-assign_cell_types_V <- function(so) {
-  library(SingleR)
-  library(scater)
-  library(celldex)
-  library(RColorBrewer)
-  ref <- celldex::MonacoImmuneData()
-  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
-  sce <- scater::logNormCounts(sce)
-  for (predtype in c("fine", "main")) {
-    if (predtype == "fine") {
-      lbls <- ref$label.fine
-    } else {
-      lbls <- ref$label.main
-    }
-    print(predtype)
-    print(summary(lbls))
-    table(lbls)
-    pred <- SingleR(test = sce, ref = ref, labels = lbls,
-                    assay.type.test = "logcounts")
-    print(table(pred$labels, exclude=NULL))
-    print(plotScoreHeatmap(pred, show.pruned = TRUE))
-    ncol <- length(unique(pred$labels))
-    ncol <- round(ncol/2, digits = 0)
-    print(plotDeltaDistribution(pred, size = .5, ncol = ncol))
-    pred_tab <- as.data.frame(pred$scores[, colnames(pred$scores) %in%
-                  unique(pred$labels)])
-    pred_tab$pruned.labels <- pred$pruned.labels
-    colnames(pred_tab) <- paste(colnames(pred_tab),
-                                   "singleR", predtype, sep = "_")
-    rownames(pred_tab) <- rownames(pred)
-    so@meta.data <- cbind(so@meta.data, pred_tab)
-    lbl <- paste0("pruned.labels_singleR_", predtype)
-    so[[lbl]][ is.na(so[[lbl]])] <- "unchar"
-    sort(table(so[[lbl]]), decreasing = TRUE)
-    lev <- names(sort(table(so[[lbl]]), decreasing = TRUE))
-    lev <- c(lev[-which(lev == "unchar")], "unchar")
-    so[[lbl]] <- factor(so[[lbl]], levels = lev)
-    palette <-
-      colorRampPalette(brewer.pal(8, "Set3"))(length(unique(so[[lbl]])))
-    print(VlnPlot(so, features = c("CD74", "CD3E", "CD3D", "CD3G"),
-                  cols = palette, assay = "RNA", ncol = 4, group.by = lbl))
+    so_vector <- as.vector(so[[lbl]][,1])
+    so$meta.data[[lbl]] <- factor(so_vector, levels = lev)
   }
   so
 }
