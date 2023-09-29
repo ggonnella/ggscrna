@@ -255,6 +255,7 @@ merge_seurat_list <- function(so_list, order=NULL, freemem=TRUE) {
   }
   so <- merge(x = so_list[[1]],
               y = so_list[2:length(so_list)],
+              merge.data = TRUE,
               add.cell.id = sampleIDs)
   so@meta.data$sample <- factor(so@meta.data$sample, levels = sampleIDs)
   if (freemem) {
