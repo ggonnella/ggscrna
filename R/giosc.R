@@ -2,22 +2,13 @@
 #' Helper functions for scRNA-seq analysis with Seurat
 #'
 
+#'
+#' Acknowledgements:
+#' some of the code was originally derived from code written by Sebastien Mella
+#'
+
 # Licence: CC-BY-SA
 # (c) Giorgio Gonnella, 2023
-
-library(Seurat)
-library(dplyr)
-library(ggplot2)
-library(glue)
-library(knitr)
-library(reshape2)
-library(RColorBrewer)
-library(ggsci)
-library(matrixStats)
-library(scater)
-library(SingleR)
-library(celldex)
-library(SingleCellExperiment)
 
 #' Get sample IDs from a sample sheet
 #'
@@ -58,14 +49,14 @@ get_sample_IDs <- function(samples_sheet, column) {
 #' @return The SeuratObject, with additional metrics in ``@meta.data``
 #"         and renaming some of the default metrics.
 prepare_QC <- function(so) {
-  so$mitoRatio <- PercentageFeatureSet(object = so, pattern = "^MT-")
+  so$mitoRatio <- Seurat::PercentageFeatureSet(object = so, pattern = "^MT-")
   so$mitoRatio <- so@meta.data$mitoRatio / 100
   so$log10GenesPerUMI <- log10(so$nFeature_RNA) / log10(so$nCount_RNA)
   so$cells <- rownames(so@meta.data)
   so
 }
 
-DEFAULT_COUNTS_FILENAME <- "filtered_feature_bc_matrix.h5"
+CELLRANGER_FILTERED_COUNTS <- "filtered_feature_bc_matrix.h5"
 
 #' Read Counts using Read10X_h5 and call CreateSeuratObject
 #'
@@ -82,12 +73,12 @@ DEFAULT_COUNTS_FILENAME <- "filtered_feature_bc_matrix.h5"
 #'
 #' @return SeuratObject from the given count matrix.
 counts_to_seurat <- function(sampleID, data_dir_template,
-                          counts_filename = DEFAULT_COUNTS_FILENAME,
+                          counts_filename = CELLRANGER_FILTERED_COUNTS,
                           min_cells = 0, min_features = 0) {
-  data_dir <- glue(data_dir_template)
+  data_dir <- glue::glue(data_dir_template)
   counts_fullpath <- paste0(data_dir, counts_filename)
-  data <- Read10X_h5(filename = counts_fullpath)
-  so <- CreateSeuratObject(counts = data,
+  data <- Seurat::Read10X_h5(filename = counts_fullpath)
+  so <- Seurat::CreateSeuratObject(counts = data,
                            project = sampleID,
                            min.cells = min_cells,
                            min.features = min_features)
@@ -102,46 +93,33 @@ counts_to_seurat <- function(sampleID, data_dir_template,
 #'
 #' @return Seurat object with additional QC metrics
 scater_qc <- function(so) {
-  library(scater)
-  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+  sce <- SingleCellExperiment::SingleCellExperiment(
+            assays = list(counts = so@assays$RNA@counts))
   is_mito <- grep("^MT-", rownames(sce))
-  qcstats <- perCellQCMetrics(sce, subsets=list(Mito=is_mito))
+  qcstats <- scater::perCellQCMetrics(sce, subsets=list(Mito=is_mito))
   filt_ad <- data.frame(
-    qc.lib.low = isOutlier(qcstats$sum, log = TRUE, type = "lower"),
-    qc.lib.high = isOutlier(qcstats$sum,
+    qc.lib.low = scater::isOutlier(qcstats$sum, log = TRUE, type = "lower"),
+    qc.lib.high = scater::isOutlier(qcstats$sum,
                             log = FALSE, type = "higher", nmads = 4),
-    qc.nexpr.low = isOutlier(qcstats$detected, log = TRUE, type = "lower"),
-    qc.nexpr.high = isOutlier(qcstats$detected,
+    qc.nexpr.low = scater::isOutlier(qcstats$detected, log = TRUE,
+                                     type = "lower"),
+    qc.nexpr.high = scater::isOutlier(qcstats$detected,
                               log = FALSE, type = "higher", nmads = 4),
-    qc.mito.high = isOutlier(qcstats$subsets_Mito_percent,
+    qc.mito.high = scater::isOutlier(qcstats$subsets_Mito_percent,
                              log = FALSE, type = "higher")
   )
   qcstats <- cbind(qcstats, filt_ad)
-  summary(qcstats)
   names(qcstats) <- paste0("scater_", names(qcstats))
   so@meta.data <- cbind(so@meta.data, qcstats)
-  so
-}
-
-#' Add QC information from robustbase library to Seurat object
-#'
-#' @param so Seurat object
-#'
-#' @return Seurat object with additional QC metrics
-robustbase_qc <- function(so) {
-  library(robustbase)
-  set.seed(1234)
+  withr::local_seed(1234)
   stats <- cbind(log10(so$nCount_RNA), log10(so$nFeature_RNA), so$mitoRatio)
-  outlying <- adjOutlyingness(stats, only.outlyingness = TRUE)
-  multi.outlier <- isOutlier(outlying, type = "higher")
-  summary(multi.outlier)
+  outlying <- robustbase::adjOutlyingness(stats, only.outlyingness = TRUE)
+  multi.outlier <- scater::isOutlier(outlying, type = "higher")
   so@meta.data <- cbind(so@meta.data, multi.outlier)
   so
 }
 
 #' Identify cell cycle phases
-#'
-#' derived from a function of Sebastien Mella
 #'
 #' @param so Seurat object
 #' @param genes List of genes for cell cycle scoring
@@ -149,13 +127,13 @@ robustbase_qc <- function(so) {
 #' @return Seurat object with additional columns 'Phase', 'S.Score'
 #'         and 'G2M.Score'
 #'
-id_cc_phase <- function(so, genes = cc.genes.updated.2019) {
+id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019) {
   s_genes = genes$s.genes
   g2m_genes = genes$g2m.genes
   s_genes_table <- as.data.frame(table(s_genes %in% rownames(so)))
   g2m_genes_table <- as.data.frame(table(g2m_genes %in% rownames(so)))
-  so_norm <- NormalizeData(so, assay = "RNA")
-  so_norm <- CellCycleScoring(so_norm,
+  so_norm <- Seurat::NormalizeData(so, assay = "RNA")
+  so_norm <- Seurat::CellCycleScoring(so_norm,
                     s.features = s_genes[s_genes %in% rownames(so_norm)],
                     g2m.features = g2m_genes[g2m_genes %in% rownames(so_norm)])
   so$Phase <- as.factor(so_norm$Phase)
@@ -166,8 +144,6 @@ id_cc_phase <- function(so, genes = cc.genes.updated.2019) {
 
 #' Plot cell cycle phases
 #'
-#' derived from a function of Sebastien Mella
-#'
 plot_cc_phase <- function(so, sample = NULL) {
   if (!is.null(sample)) {
     so <- subset(so, sample == sample)
@@ -175,16 +151,18 @@ plot_cc_phase <- function(so, sample = NULL) {
   so$Phase = as.factor(so$Phase)
   ccp_df <- as.data.frame.array(table(so$Phase))
   ccp_df$phase <- rownames(ccp_df)
-  so <- FindVariableFeatures(so, selection.method = "vst", array = "RNA",
-                             nfeatures = 2000, verbose = FALSE)
-  so <- ScaleData(so, assay = "RNA", verbose = FALSE)
-  so <- RunPCA(so, assay = "RNA", reduction.name = "pcaRNA",
+  so <- Seurat::FindVariableFeatures(so, selection.method = "vst",
+                                     array = "RNA", nfeatures = 2000,
+                                     verbose = FALSE)
+  so <- Seurat::ScaleData(so, assay = "RNA", verbose = FALSE)
+  so <- Seurat::RunPCA(so, assay = "RNA", reduction.name = "pcaRNA",
                reduction.key = "pcaRNA_", verbose = FALSE)
   ccg_colors <-
     RColorBrewer::brewer.pal(length(levels(so$Phase)), name = "Set1")
-  plt1 = DimPlot(so, reduction = "pcaRNA", group.by= "Phase", cols = ccg_colors)
-  plt2 = DimPlot(so, reduction = "pcaRNA", group.by= "Phase", split.by = "Phase",
-                 cols = ccg_colors)
+  plt1 = Seurat::DimPlot(so, reduction = "pcaRNA", group.by= "Phase",
+                         cols = ccg_colors)
+  plt2 = Seurat::DimPlot(so, reduction = "pcaRNA", group.by= "Phase",
+                         split.by = "Phase", cols = ccg_colors)
   gridExtra::grid.arrange(plt1, plt2, ncol = 2)
 }
 
@@ -200,14 +178,14 @@ plot_cc_phase <- function(so, sample = NULL) {
 #' @return list of Seurat objects for each of the samples
 #'
 multi_counts_to_seurat <- function(sampleIDs, input_dir_template,
-                                   counts_filename = DEFAULT_COUNTS_FILENAME) {
+                                   counts_filename =
+                                     CELLRANGER_FILTERED_COUNTS) {
   so_list <- list()
   for (sampleID in sampleIDs) {
     so_list[[sampleID]] <-
       counts_to_seurat(sampleID, input_dir_template, counts_filename)
     so_list[[sampleID]]$sample <- sampleID
     so_list[[sampleID]] <- scater_qc(so_list[[sampleID]])
-    so_list[[sampleID]] <- robustbase_qc(so_list[[sampleID]])
     so_list[[sampleID]] <- id_cc_phase(so_list[[sampleID]])
     print(paste0("Created Seurat object for sample: '", sampleID,
                  "' (n_cells: ", length(so_list[[sampleID]]$cells),
@@ -278,10 +256,10 @@ merge_seurat_list <- function(so_list, order=NULL, freemem=TRUE) {
 #' @return A ggplot object
 #'
 qc_distri_plot <- function(so, measure) {
-  ggplot(so@meta.data, aes_string(x=measure)) +
-    geom_histogram(bins=100) +
-  ggtitle(paste(measure, "Distribution")) +
-  xlab(measure) + ylab("Frequency")
+  ggplot2::ggplot(so@meta.data, ggplot2::aes_string(x=measure)) +
+    ggplot2::geom_histogram(bins=100) +
+  ggplot2::ggtitle(paste(measure, "Distribution")) +
+  ggplot2::xlab(measure) + ggplot2::ylab("Frequency")
 }
 
 
@@ -291,12 +269,14 @@ qc_distri_plot <- function(so, measure) {
 #'
 histogram_n_cells <- function(so) {
   so@meta.data %>%
-    	ggplot(aes(x=sample, fill=sample)) +
-    	geom_bar() +
-    	theme_classic() +
-    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
-    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
-    	ggtitle("Number of cells")
+    	ggplot2::ggplot(ggplot2::aes(x=sample, fill=sample)) +
+    	ggplot2::geom_bar() +
+    	ggplot2::theme_classic() +
+    	ggplot2::theme(axis.text.x =
+                     ggplot2::element_text(angle=45, vjust=1, hjust=1)) +
+    	ggplot2::theme(plot.title =
+                     ggplot2::element_text(hjust=0.5, face="bold")) +
+    	ggplot2::ggtitle("Number of cells")
 }
 
 #' Plot number of UMIs per cell in different samples
@@ -305,16 +285,16 @@ histogram_n_cells <- function(so) {
 #'
 density_plot_n_umis <- function(so, plot_nrows=0) {
   so@meta.data %>%
-    	ggplot(aes(color=sample, x=nCount_RNA, fill=sample)) +
-    	geom_density(alpha = 0.2) +
-    	scale_x_log10() +
-    	theme_classic() +
-    	ylab("cell density") +
-    	geom_vline(xintercept = 100) +
-    	geom_vline(xintercept = 500) +
-    	geom_vline(xintercept = 1000) +
-      facet_wrap(~sample, nrow=plot_nrows) +
-    	ggtitle("Number of UMIs per cell")
+      ggplot2::ggplot(ggplot2::aes(color=sample, x=nCount_RNA, fill=sample)) +
+    	ggplot2::geom_density(alpha = 0.2) +
+    	ggplot2::scale_x_log10() +
+    	ggplot2::theme_classic() +
+    	ggplot2::ylab("cell density") +
+    	ggplot2::geom_vline(xintercept = 100) +
+    	ggplot2::geom_vline(xintercept = 500) +
+    	ggplot2::geom_vline(xintercept = 1000) +
+      ggplot2::facet_wrap(~sample, nrow=plot_nrows) +
+    	ggplot2::ggtitle("Number of UMIs per cell")
 }
 
 #' Boxplot of the number of UMIs per cell
@@ -323,12 +303,15 @@ density_plot_n_umis <- function(so, plot_nrows=0) {
 #'
 boxplot_n_umis <- function(so) {
   so@meta.data %>%
-    	ggplot(aes(x=sample, y=log10(nCount_RNA), fill=sample)) +
-    	geom_boxplot() +
-    	theme_classic() +
-    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
-    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
-    	ggtitle("Number of UMIs per cell")
+    	ggplot2::ggplot(
+          ggplot2::aes(x=sample, y=log10(nCount_RNA), fill=sample)) +
+    	ggplot2::geom_boxplot() +
+    	ggplot2::theme_classic() +
+    	ggplot2::theme(axis.text.x =
+          ggplot2::element_text(angle=45, vjust=1, hjust=1)) +
+    	ggplot2::theme(plot.title =
+          ggplot2::element_text(hjust=0.5, face="bold")) +
+    	ggplot2::ggtitle("Number of UMIs per cell")
 }
 
 #' Plot number of genes per cell in different samples
@@ -337,13 +320,13 @@ boxplot_n_umis <- function(so) {
 #'
 density_plot_n_genes <- function(so, plot_nrows=0) {
   so@meta.data %>%
-    	ggplot(aes(color=sample, x=nFeature_RNA, fill=sample)) +
-    	geom_density(alpha = 0.2) +
-    	theme_classic() +
-    	scale_x_log10() +
-    	geom_vline(xintercept = 300) +
-      facet_wrap(~sample, nrow=plot_nrows) +
-    	ggtitle("Number of genes per cell")
+    	ggplot2::ggplot(ggplot2::aes(color=sample, x=nFeature_RNA, fill=sample)) +
+    	ggplot2::geom_density(alpha = 0.2) +
+    	ggplot2::theme_classic() +
+    	ggplot2::scale_x_log10() +
+    	ggplot2::geom_vline(xintercept = 300) +
+      ggplot2::facet_wrap(~sample, nrow=plot_nrows) +
+    	ggplot2::ggtitle("Number of genes per cell")
 }
 
 
@@ -353,48 +336,53 @@ density_plot_n_genes <- function(so, plot_nrows=0) {
 #'
 boxplot_n_genes <- function(so) {
   so@meta.data %>%
-    	ggplot(aes(x=sample, y=log10(nFeature_RNA), fill=sample)) +
-    	geom_boxplot() +
-    	theme_classic() +
-    	theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1)) +
-    	theme(plot.title = element_text(hjust=0.5, face="bold")) +
-    	ggtitle("Number of genes per cell")
+    	ggplot2::ggplot(ggplot2::aes(x=sample,
+                                   y=log10(nFeature_RNA), fill=sample)) +
+    	ggplot2::geom_boxplot() +
+    	ggplot2::theme_classic() +
+    	ggplot2::theme(axis.text.x =
+        ggplot2::element_text(angle=45, vjust=1, hjust=1)) +
+    	ggplot2::theme(plot.title =
+        ggplot2::element_text(hjust=0.5, face="bold")) +
+    	ggplot2::ggtitle("Number of genes per cell")
 }
 
 dotplot_n_umis_genes_mito <- function(so, plot_nrows=0) {
   so@meta.data %>%
-    	ggplot(aes(x=nCount_RNA, y=nFeature_RNA, color=mitoRatio)) +
-    	geom_point() +
-  	  scale_colour_gradient(low = "gray90", high = "black") +
-    	stat_smooth(method=lm) +
-    	scale_x_log10() +
-    	scale_y_log10() +
-    	theme_classic() +
-    	geom_vline(xintercept = 500) +
-    	geom_hline(yintercept = 250) +
-    	facet_wrap(~sample, nrow=plot_nrows) +
-      ggtitle("N. UMIs vs N. genes and mit.genes ratio")
+    	ggplot2::ggplot(ggplot2::aes(x=nCount_RNA,
+                                   y=nFeature_RNA, color=mitoRatio)) +
+    	ggplot2::geom_point() +
+  	  ggplot2::scale_colour_gradient(low = "gray90", high = "black") +
+    	ggplot2::stat_smooth(method=lm) +
+    	ggplot2::scale_x_log10() +
+    	ggplot2::scale_y_log10() +
+    	ggplot2::theme_classic() +
+    	ggplot2::geom_vline(xintercept = 500) +
+    	ggplot2::geom_hline(yintercept = 250) +
+    	ggplot2::facet_wrap(~sample, nrow=plot_nrows) +
+      ggplot2::ggtitle("N. UMIs vs N. genes and mit.genes ratio")
 }
 
 density_plot_mito_ratio <- function(so, plot_nrows=0) {
   so@meta.data %>%
-    	ggplot(aes(color=sample, x=mitoRatio, fill=sample)) +
-    	geom_density(alpha = 0.2) +
-    	scale_x_log10() +
-    	theme_classic() +
-    	geom_vline(xintercept = 0.2) +
-      facet_wrap(~sample, nrow=plot_nrows) +
-      ggtitle("Mitochondrial gene ratio per cell")
+    	ggplot2::ggplot(ggplot2::aes(color=sample, x=mitoRatio, fill=sample)) +
+    	ggplot2::geom_density(alpha = 0.2) +
+    	ggplot2::scale_x_log10() +
+    	ggplot2::theme_classic() +
+    	ggplot2::geom_vline(xintercept = 0.2) +
+      ggplot2::facet_wrap(~sample, nrow=plot_nrows) +
+      ggplot2::ggtitle("Mitochondrial gene ratio per cell")
 }
 
 density_plot_complexity <- function(so, plot_nrows=0) {
   so@meta.data %>%
-    	ggplot(aes(x=log10GenesPerUMI, color=sample, fill=sample)) +
-    	geom_density(alpha = 0.2) +
-    	theme_classic() +
-    	geom_vline(xintercept = 0.8) +
-      facet_wrap(~sample, nrow=plot_nrows) +
-      ggtitle("Transcriptional complexity")
+    	ggplot2::ggplot(
+        ggplot2::aes(x=log10GenesPerUMI, color=sample, fill=sample)) +
+    	ggplot2::geom_density(alpha = 0.2) +
+    	ggplot2::theme_classic() +
+    	ggplot2::geom_vline(xintercept = 0.8) +
+      ggplot2::facet_wrap(~sample, nrow=plot_nrows) +
+      ggplot2::ggtitle("Transcriptional complexity")
 }
 
 #' Create and print several QC metrics plots
@@ -437,34 +425,35 @@ get_step_dir <- function(steps_dir, step_n) {
 
 #' Plot the highest expressed genes
 #'
-#' based on a similar function by Sebastien Mella
-#'
 #' @param so Seurat object
 #' @param n_genes Integer. Number of genes to plot
 #' @param sample String. Keep only specified sample. Default: keep all.
 #'
 #' @return A ggplot object
 h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
-  library(reshape2)
-  library(RColorBrewer)
-  library(ggsci)
-  library(matrixStats)
   title <- "Highest expressed genes"
   count_matrix <- as.matrix(so@assays$RNA@counts)
   if (!is.null(sample)) {
     count_matrix <- count_matrix[, grepl(sample, colnames(count_matrix))]
     title <- paste0(title, " (Sample ", sample, ")")
   }
-  values <- head(order(rowSums2(count_matrix), decreasing = TRUE), n_genes)
+  values <- head(order(matrixStats::rowSums2(count_matrix),
+                       decreasing = TRUE), n_genes)
   sub_mat <- as.data.frame(count_matrix[values, ])
   sub_mat$feature <- factor(rownames(sub_mat), levels = rev(rownames(sub_mat)))
   sub_mat_long_fmt <- melt(sub_mat, id.vars = "feature")
-  plot_colors <- colorRampPalette(
-                            rev(pal_futurama("planetexpress")(12)))(n_genes)
-  ggplot(sub_mat_long_fmt, aes(x = value, y = feature))+
-    geom_boxplot(aes(fill = feature), alpha = .75) +
-    scale_fill_manual(values = plot_colors) + theme_light() +
-    guides(fill="none") + xlab("Count") + ylab("Gene") + ggtitle(title)
+  plot_colors <- grDevices::colorRampPalette(
+                   rev(ggsci::pal_futurama("planetexpress")(12)))(n_genes)
+  plt <- ggplot2::ggplot(sub_mat_long_fmt,
+           ggplot2::aes(x = value, y = feature)) +
+         ggplot2::geom_boxplot(aes(fill = feature), alpha = .75) +
+         ggplot2::scale_fill_manual(values = plot_colors) +
+         ggplot2::theme_light() +
+         ggplot2::guides(fill="none") +
+         ggplot2::xlab("Count") +
+         ggplot2::ylab("Gene") +
+         ggplot2::ggtitle(title)
+  plt
 }
 
 #' Cell type assignment using SingleR
@@ -476,7 +465,8 @@ h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
 #'
 assign_cell_types <- function(so) {
   ref <- celldex::MonacoImmuneData()
-  sce <- SingleCellExperiment(assays = list(counts = so@assays$RNA@counts))
+  sce <- SingleCellExperiment::SingleCellExperiment(
+            assays = list(counts = so@assays$RNA@counts))
   sce <- scater::logNormCounts(sce)
   for (predtype in c("fine", "main")) {
     if (predtype == "fine") {
@@ -484,7 +474,7 @@ assign_cell_types <- function(so) {
     } else {
       lbls <- ref$label.main
     }
-    pred <- SingleR(test = sce, ref = ref, labels = lbls,
+    pred <- SingleR::SingleR(test = sce, ref = ref, labels = lbls,
                     assay.type.test = "logcounts")
     pred_tab <- as.data.frame(pred$scores[, colnames(pred$scores) %in%
                   unique(pred$labels)])

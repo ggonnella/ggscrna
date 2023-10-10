@@ -18,10 +18,13 @@ Imports:
   knitr,
   reshape2,
   RColorBrewer,
+  gridExtra,
   ggsci,
   matrixStats,
   scater,
   SingleR,
   celldex,
   SingleCellExperiment,
-  robustbase
+  robustbase,
+  withr,
+  grDevices
