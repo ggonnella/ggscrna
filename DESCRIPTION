@@ -27,4 +27,5 @@ Imports:
   SingleCellExperiment,
   robustbase,
   withr,
-  grDevices
+  grDevices,
+  tictoc
