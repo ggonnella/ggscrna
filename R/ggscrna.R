@@ -415,17 +415,6 @@ show_qc_plots <- function(so, plot_nrows=0) {
   print(density_plot_complexity(so, plot_nrows))
 }
 
-#' Include a Rmd file in another
-#'
-#' @param file Filename of the file to be included
-#'
-source_rmd <- function(file, ...) {
-  tmp_file <- tempfile(fileext = ".R")
-  on.exit(unlink(tmp_file), add = TRUE)
-  knitr::purl(file, output = tmp_file)
-  source(file <- tmp_file, ...)
-}
-
 #' Get the path to a step directory
 #'
 #' @param steps_dir String. Path to the "steps" directory.
