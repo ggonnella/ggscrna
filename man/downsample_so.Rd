@@ -12,6 +12,8 @@ downsample_so(so, ncells, verbose = TRUE, tic = TRUE)
 \item{ncells}{Number of cells to downsample to}
 
 \item{verbose}{Print verbose messages}
+
+\item{tic}{Print timing information}
 }
 \value{
 Seurat object with the desired number of cells

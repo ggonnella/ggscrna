@@ -4,12 +4,24 @@
 \alias{id_cc_phase}
 \title{Cell cycle phase assignment}
 \usage{
-id_cc_phase(so, genes = Seurat::cc.genes.updated.2019)
+id_cc_phase(
+  so,
+  genes = Seurat::cc.genes.updated.2019,
+  verbose = TRUE,
+  tic = TRUE,
+  plot = FALSE
+)
 }
 \arguments{
 \item{so}{Seurat object}
 
 \item{genes}{List of genes for cell cycle scoring}
+
+\item{verbose}{Print verbose messages}
+
+\item{tic}{Print timing information}
+
+\item{plot}{Whether to plot the cell cycle phases using plot_cc_phase}
 }
 \value{
 Seurat object with additional columns 'Phase', 'S.Score'

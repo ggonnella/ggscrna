@@ -2,21 +2,53 @@
 % Please edit documentation in R/celltypes.R
 \name{assign_cell_types}
 \alias{assign_cell_types}
-\title{Cell type assignment}
+\title{Cell type assignment using SingleR and celldex reference}
 \usage{
-assign_cell_types(so)
+assign_cell_types(
+  so,
+  refs = c(celldex::MonacoImmuneData()),
+  refnames = c("monaco"),
+  predtypes = c("fine", "main", "ont"),
+  getlbl = celldex_get_labels
+)
 }
 \arguments{
 \item{so}{Seurat object}
+
+\item{refs.}{Reference datasets of celldex to use.
+Default: MonacoImmuneData, ImmGenData
+Other generic datasets:
+  HumanPrimaryCellAtlasData
+  MouseRNAseqData
+Other immunology datasets:
+  BlueprintEncodeData:
+     low resolution
+     best option for: fast interpretation of results
+  ImmGenData:
+     very high resolution
+  DatabaseImmuneCellExpressionData:
+     good resolution: CD4+ T cells
+     low resolution: B cells
+     lacking: CD4+ central memory, effector memory, dendritic cells
+  NovershternHematopoieticData:
+    good resolution: myeloid cells, progenitors, NK, erythroid,
+                     granulocytes
+    best option for: bone marrow samples}
+
+\item{refnames.}{Names of the reference datasets.
+Default: "monaco", "immgen"}
+
+\item{predtypes.}{Types of labels to use.
+Default: "fine", "main", "ont"}
+
+\item{getlbl.}{Function to get the labels from the reference object.
+using fun(ref, predtype). Defaults to an internal function
+which can be used with celldex datasets.}
 }
 \value{
-Seurat object with additional columns 'SingleR.best_hit',
-        'SingleR.best_score' and 'SingleR.best_match'
+Seurat object with additional meta.data columns:
+          pruned.labels_singleR_<refname>_<predtype>
 }
 \description{
-Acknowledgements:
-some of the code was originally derived from code written by Sebastien Mella
-}
-\details{
-Cell type assignment using SingleR
+Cell type assignment using SingleR and celldex reference
 }
