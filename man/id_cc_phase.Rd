@@ -2,7 +2,7 @@
 % Please edit documentation in R/cellcycle.R
 \name{id_cc_phase}
 \alias{id_cc_phase}
-\title{Giorgio's functions for single cell sequencing analysis}
+\title{Cell cycle phase assignment}
 \usage{
 id_cc_phase(so, genes = Seurat::cc.genes.updated.2019)
 }

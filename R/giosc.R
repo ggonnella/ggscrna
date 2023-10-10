@@ -1,5 +1,5 @@
 #'
-#' Giorgio's functions for single cell sequencing analysis
+#' Functions for reading/merging/splitting a Seurat object.
 #'
 
 # Licence: CC-BY-SA
@@ -9,38 +9,6 @@
 #' Acknowledgements:
 #' some of the code was originally derived from code written by Sebastien Mella
 #'
-
-#' Get sample IDs from a sample sheet
-#'
-#' The sample sheet must be in TSV format. The first line must be
-#' the header, containing column names and optionally starting with
-#' a '#' (without any spaces following it).
-#'
-#' @param samples_sheet String. Path to the TSV file
-#' @param column String. Column containing the sample IDs
-#' @param verbose Boolean. Whether to print the sample sheet and the IDs.
-#' @return Vector of strings. IDs of the samples.
-#' @examples
-#'   samples <- get_sample_IDs("~/project/samples.tsv", "PatientID")
-#'
-get_sample_IDs <- function(samples_sheet, column, verbose=TRUE) {
-  header <- read.table(samples_sheet, sep="\t", header=FALSE,  nrows=1,
-                       stringsAsFactors=FALSE, comment.char="")
-  header <- gsub("^#", "", unlist(header))
-  samples_metadata <- read.table(samples_sheet, sep="\t", col.names = header,
-                                 header=FALSE, skip=1, comment.char="",
-                                 colClasses = setNames("character", column))
-  if (verbose) {
-    print(paste("Sample sheet:", samples_sheet))
-    print(samples_metadata)
-  }
-  samples <- subset(samples_metadata, select = c(column))
-  samples <- samples[[1]]
-  if (verbose) {
-    print(paste("Samples:", paste(samples, collapse=", ")))
-  }
-  samples
-}
 
 CELLRANGER_FILTERED_COUNTS <- "filtered_feature_bc_matrix.h5"
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/celltypes.R
 \name{assign_cell_types}
 \alias{assign_cell_types}
-\title{Giorgio's functions for single cell sequencing analysis}
+\title{Cell type assignment}
 \usage{
 assign_cell_types(so)
 }

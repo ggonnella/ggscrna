@@ -1,5 +1,5 @@
 #'
-#' Giorgio's functions for single cell sequencing analysis
+#' Cell type assignment
 #'
 
 # Licence: CC-BY-SA

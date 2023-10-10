@@ -1,5 +1,5 @@
 #'
-#' Giorgio's functions for single cell sequencing analysis
+#' Cell cycle phase assignment
 #'
 
 # Licence: CC-BY-SA
