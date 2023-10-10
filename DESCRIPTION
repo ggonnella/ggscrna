@@ -1,10 +1,10 @@
-Package: ggscrna
+Package: giosc
 Type: Package
-Title: ScRNA-seq analysis helper functions by GG
+Title: Giorgio's Single Cell (giosc) analysis package
 Version: 0.1.0
 Author: Giorgio Gonnella
 Maintainer: Giorgio Gonnella <ggonnell@yahoo.it>
-Description: Helper functions used in my scRNA-seq scripts.
+Description: Functions used in my scRNA-seq scripts.
     Feel free to use them if they can be useful to you too.
 License: CC-BY-SA-4.0
 Encoding: UTF-8
