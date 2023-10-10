@@ -10,6 +10,7 @@
 #' @param so Seurat object
 #' @param ncells Number of cells to downsample to
 #' @param verbose Print verbose messages
+#' @param tic Print timing information
 #' @return Seurat object with the desired number of cells
 #'         (or less if the original number of cells is less than ncells)
 #' @export
