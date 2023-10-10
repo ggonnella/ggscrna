@@ -7,7 +7,7 @@
 counts_to_seurat(
   sampleID,
   data_dir_template,
-  counts_filename = DEFAULT_COUNTS_FILENAME,
+  counts_filename = CELLRANGER_FILTERED_COUNTS,
   min_cells = 0,
   min_features = 0
 )

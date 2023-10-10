@@ -7,7 +7,7 @@
 multi_counts_to_seurat(
   sampleIDs,
   input_dir_template,
-  counts_filename = DEFAULT_COUNTS_FILENAME
+  counts_filename = CELLRANGER_FILTERED_COUNTS
 )
 }
 \arguments{

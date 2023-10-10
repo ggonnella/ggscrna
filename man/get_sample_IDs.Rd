@@ -2,19 +2,27 @@
 % Please edit documentation in R/giosc.R
 \name{get_sample_IDs}
 \alias{get_sample_IDs}
-\title{Get sample IDs from a sample sheet}
+\title{Giorgio's functions for single cell sequencing analysis}
 \usage{
-get_sample_IDs(samples_sheet, column)
+get_sample_IDs(samples_sheet, column, verbose = TRUE)
 }
 \arguments{
 \item{samples_sheet}{String. Path to the TSV file}
 
 \item{column}{String. Column containing the sample IDs}
+
+\item{verbose}{Boolean. Whether to print the sample sheet and the IDs.}
 }
 \value{
 Vector of strings. IDs of the samples.
 }
 \description{
+Acknowledgements:
+some of the code was originally derived from code written by Sebastien Mella
+}
+\details{
+Get sample IDs from a sample sheet
+
 The sample sheet must be in TSV format. The first line must be
 the header, containing column names and optionally starting with
 a '#' (without any spaces following it).
