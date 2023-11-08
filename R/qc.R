@@ -10,6 +10,9 @@
 #' some of the code was originally derived from code written by Sebastien Mella
 #'
 
+# define %>%
+`%>%` <- dplyr::`%>%`
+
 #' Compute additional metrics on the Seurat object
 #'
 #' The metrics are those explained in:
