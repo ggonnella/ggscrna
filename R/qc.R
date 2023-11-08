@@ -241,7 +241,7 @@ h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
                        decreasing = TRUE), n_genes)
   sub_mat <- as.data.frame(count_matrix[values, ])
   sub_mat$feature <- factor(rownames(sub_mat), levels = rev(rownames(sub_mat)))
-  sub_mat_long_fmt <- melt(sub_mat, id.vars = "feature")
+  sub_mat_long_fmt <- reshape2::melt(sub_mat, id.vars = "feature")
   plot_colors <- grDevices::colorRampPalette(
                    rev(ggsci::pal_futurama("planetexpress")(12)))(n_genes)
   plt <- ggplot2::ggplot(sub_mat_long_fmt,
