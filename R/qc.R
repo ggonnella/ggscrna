@@ -246,7 +246,7 @@ h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
                    rev(ggsci::pal_futurama("planetexpress")(12)))(n_genes)
   plt <- ggplot2::ggplot(sub_mat_long_fmt,
            ggplot2::aes(x = value, y = feature)) +
-         ggplot2::geom_boxplot(aes(fill = feature), alpha = .75) +
+         ggplot2::geom_boxplot(ggplot2::aes(fill = feature), alpha = .75) +
          ggplot2::scale_fill_manual(values = plot_colors) +
          ggplot2::theme_light() +
          ggplot2::guides(fill="none") +
