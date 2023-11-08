@@ -37,7 +37,7 @@ prepare_QC <- function(so) {
 #' @return Seurat object with additional QC metrics
 scater_qc <- function(so) {
   sce <- SingleCellExperiment::SingleCellExperiment(
-            assays = list(counts = so@assays$RNA@counts))
+            assays = list(counts = so@assays$RNA@layers$counts))
   is_mito <- grep("^MT-", rownames(sce))
   qcstats <- scater::perCellQCMetrics(sce, subsets=list(Mito=is_mito))
   filt_ad <- data.frame(
@@ -229,7 +229,7 @@ show_qc_plots <- function(so, plot_nrows=0) {
 #' @return A ggplot object
 h_expr_genes_plot <- function(so, n_genes = 10, sample = NULL) {
   title <- "Highest expressed genes"
-  count_matrix <- as.matrix(so@assays$RNA@counts)
+  count_matrix <- as.matrix(so@assays$RNA@layers$counts)
   if (!is.null(sample)) {
     count_matrix <- count_matrix[, grepl(sample, colnames(count_matrix))]
     title <- paste0(title, " (Sample ", sample, ")")
