@@ -44,7 +44,7 @@ id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
 #' Preamble to the plot/table functions
 #'
 #' @noRd
-cc_phase_preamble <- function(so) {
+cc_phase_preamble <- function(so, sample = NULL) {
   if (!"Phase" %in% colnames(so@meta.data)) {
     stop("Phase not found in metadata. Run id_cc_phase first.")
   }
@@ -66,7 +66,7 @@ cc_phase_preamble <- function(so) {
 #' @return Character vector with the table
 #'
 cc_phase_table <- function(so, sample = NULL) {
-  so <- cc_phase_preamble(so)
+  so <- cc_phase_preamble(so, sample)
   result <- character()
   result <- c(result, "Number of cells in each cell cycle phase:")
   result <- c(result, "Phase\tNumber\tPercentage")
@@ -87,7 +87,7 @@ cc_phase_table <- function(so, sample = NULL) {
 #' @return ggplot2 object
 #'
 cc_phase_plot <- function(so, sample = NULL) {
-  so <- cc_phase_preamble(so)
+  so <- cc_phase_preamble(so, sample)
   ccp_df <- as.data.frame.array(table(so$Phase))
   ccp_df$phase <- rownames(ccp_df)
   so <- Seurat::FindVariableFeatures(so, selection.method = "vst",
