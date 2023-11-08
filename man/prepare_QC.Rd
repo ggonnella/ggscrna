@@ -2,7 +2,7 @@
 % Please edit documentation in R/qc.R
 \name{prepare_QC}
 \alias{prepare_QC}
-\title{Quality control functions.}
+\title{Compute additional metrics on the Seurat object}
 \usage{
 prepare_QC(so)
 }
@@ -13,15 +13,10 @@ prepare_QC(so)
 The SeuratObject, with additional metrics in ``@meta.data``
 }
 \description{
-Acknowledgements:
-some of the code was originally derived from code written by Sebastien Mella
-}
-\details{
-Compute additional metrics on the Seurat object
-
 The metrics are those explained in:
 https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
-
+}
+\details{
 ## Notes
 - mt genes computation by MT- prefix assumes this is a human dataset
 }
