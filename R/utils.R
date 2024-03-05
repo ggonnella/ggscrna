@@ -52,7 +52,7 @@ get_step_dir <- function(steps_dir, step_n) {
 #' 
 #' @return                    Matrix; see keep_length param to understand the possible outputs
 #' 
-consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label) {
+consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label, keep_length=FALSE) {
   rows_to_sum <- rows_to_sum[rows_to_sum %in% rownames(matrix)]
   if (length(rows_to_sum) == 0)
     return(matrix)
