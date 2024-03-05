@@ -47,8 +47,8 @@ get_step_dir <- function(steps_dir, step_n) {
 #'                                   to the bottom of the matrix and the rows
 #'                                   which were summed are removed.
 #'                            TRUE: the first row of the rows_to_sum is replaced
-#'                                  with the summed counts; all counts of the other rows which were
-#'                                  summed are set to 0 and their names are prepended with "Removed"
+#'                                  with the summed counts (consolidated_label is ignored);
+#'                                  all counts of the other rows which were summed are set to 0
 #' 
 #' @return                    Matrix; see keep_length param to understand the possible outputs
 #' 
@@ -64,12 +64,9 @@ consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label, kee
     repl_name <- rows_to_sum[1]
     new_matrix <- matrix
     new_matrix[repl_name, ] <- summed_rows
-    rownames(new_matrix)[rownames(new_matrix) == repl_name] <- consolidated_label
 
     # reset the counts to zero for the other rows
     new_matrix[rows_to_sum[-1], ] <- 0
-    for (name in rows_to_sum[-1])
-      rownames(new_matrix)[rownames(new_matrix) == name] <- paste0("Removed", name)
 
   } else {
     new_matrix <- matrix[!rownames(matrix) %in% rows_to_sum, ]
