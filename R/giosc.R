@@ -11,6 +11,7 @@
 #'
 
 CELLRANGER_FILTERED_COUNTS <- "filtered_feature_bc_matrix.h5"
+CELLRANGER_RAW_COUNTS <- "raw_feature_bc_matrix.h5"
 
 #' Read Counts using Read10X_h5 and call CreateSeuratObject
 #'
