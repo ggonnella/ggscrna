@@ -7,12 +7,12 @@
 get_step_dir(steps_dir, step_n)
 }
 \arguments{
-\item{steps_dir}{String. Path to the "steps" directory.}
+\item{steps_dir}{String.  Path to the "steps" directory.}
 
-\item{step_n}{String. Prefix of the step.}
+\item{step_n}{String.  Prefix of the step.}
 }
 \value{
-String. Path to the step directory.
+String.  Path to the step directory.
 }
 \description{
 Get the path to a step directory

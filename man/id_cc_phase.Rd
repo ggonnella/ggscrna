@@ -24,13 +24,9 @@ id_cc_phase(
 \item{plot}{Whether to plot the cell cycle phases using plot_cc_phase}
 }
 \value{
-Seurat object with additional columns 'Phase', 'S.Score'
-        and 'G2M.Score'
+Seurat object with additional metadata:
+                'Phase', 'S.Score', 'G2M.Score'
 }
 \description{
-Acknowledgements:
-some of the code was originally derived from code written by Sebastien Mella
-}
-\details{
 Identify cell cycle phases
 }

@@ -7,16 +7,17 @@
 id_geneset(so, geneset_name, verbose = TRUE, tic = FALSE)
 }
 \arguments{
-\item{so}{a Seurat object}
+\item{so}{the Seurat object}
 
-\item{geneset_name}{a string, one of "TCR", "BCR", "MT", "RIBO"}
+\item{geneset_name}{String. Geneset name
+it must be one of the elements of 'genesets'}
 
-\item{verbose}{a boolean, if TRUE print the number of genes in the set}
+\item{verbose}{Boolean. TRUE: be verbose}
 
-\item{tic}{a boolean, if TRUE print the time taken to identify the genes}
+\item{tic}{Boolean. TRUE: show the running time}
 }
 \value{
-a vector of gene names
+Vector. Gene names
 }
 \description{
 Identify genes in a gene set

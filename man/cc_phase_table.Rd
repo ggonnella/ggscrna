@@ -4,14 +4,18 @@
 \alias{cc_phase_table}
 \title{Compile a table of cell cycle phases}
 \usage{
-cc_phase_table(so, sample = NULL)
+cc_phase_table(so, sample = NULL, outfile = NULL)
 }
 \arguments{
 \item{so}{Seurat object}
 
-\item{sample}{Sample name (optional) if the Seurat object contains
-multiple samples, only the specified sample is considered;
+\item{sample}{Sample name (optional)
+if provided: process only specified sample
 default: consider all samples}
+
+\item{outfile}{Output file (optional)
+if provided: save the table to the file
+default: return the table, but do not save it to file}
 }
 \value{
 Character vector with the table

@@ -9,46 +9,48 @@ assign_cell_types(
   refs = c(celldex::MonacoImmuneData()),
   refnames = c("monaco"),
   predtypes = c("fine", "main", "ont"),
-  getlbl = celldex_get_labels
+  getlbl = .celldex_get_labels
 )
 }
 \arguments{
 \item{so}{Seurat object}
 
-\item{refs.}{Reference datasets of celldex to use.
-Default: MonacoImmuneData, ImmGenData
-Other generic datasets:
-  HumanPrimaryCellAtlasData
-  MouseRNAseqData
-Other immunology datasets:
-  BlueprintEncodeData:
-     low resolution
-     best option for: fast interpretation of results
-  ImmGenData:
-     very high resolution
-  DatabaseImmuneCellExpressionData:
-     good resolution: CD4+ T cells
-     low resolution: B cells
-     lacking: CD4+ central memory, effector memory, dendritic cells
-  NovershternHematopoieticData:
-    good resolution: myeloid cells, progenitors, NK, erythroid,
-                     granulocytes
-    best option for: bone marrow samples}
+\item{refs}{Reference datasets of celldex to use.}
 
-\item{refnames.}{Names of the reference datasets.
-Default: "monaco", "immgen"}
+\item{refnames}{Names of each element of 'refs' to be used in column names
+Default: "monaco"}
 
-\item{predtypes.}{Types of labels to use.
+\item{predtypes}{Types of labels to use.
 Default: "fine", "main", "ont"}
 
-\item{getlbl.}{Function to get the labels from the reference object.
-using fun(ref, predtype). Defaults to an internal function
-which can be used with celldex datasets.}
+\item{getlbl}{Function to get the labels from the reference object
+called as getlbl(ref, predtype).
+Default: function which can be used with celldex datasets.}
 }
 \value{
-Seurat object with additional meta.data columns:
-          pruned.labels_singleR_<refname>_<predtype>
+Seurat object with additional metadata:
+                  pruned.labels_singleR_<refname>_<predtype>
 }
 \description{
-Cell type assignment using SingleR and celldex reference
+Available datasets to use:
+}
+\details{
+Default: MonacoImmuneData
+  Other generic datasets:
+    HumanPrimaryCellAtlasData
+    MouseRNAseqData
+  Other immunology datasets:
+    BlueprintEncodeData:
+       low resolution
+       best option for: fast interpretation of results
+    ImmGenData:
+       very high resolution
+    DatabaseImmuneCellExpressionData:
+       good resolution: CD4+ T cells
+       low resolution: B cells
+       lacking: CD4+ central memory, effector memory, dendritic cells
+    NovershternHematopoieticData:
+      good resolution: myeloid cells, progenitors, NK, erythroid,
+                       granulocytes
+      best option for: bone marrow samples
 }

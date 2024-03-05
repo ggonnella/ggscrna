@@ -10,5 +10,6 @@ source_rmd(file, ...)
 \item{file}{Filename of the file to be included}
 }
 \description{
-Include a Rmd file in another
+Call the code of a Rmd file in another Rmd or a R script.
+The code of the Rmd file is extracted as R script and then sourced.
 }

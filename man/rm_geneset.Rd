@@ -7,16 +7,17 @@
 rm_geneset(so, geneset_name, verbose = TRUE, tic = FALSE)
 }
 \arguments{
-\item{so}{a Seurat object}
+\item{so}{the Seurat object}
 
-\item{geneset_name}{a string, one of "TCR", "BCR", "MT", "RIBO"}
+\item{geneset_name}{String. Geneset name
+it must be one of the elements of 'genesets'}
 
-\item{verbose}{a boolean, if TRUE print the number of genes in the set}
+\item{verbose}{Boolean. TRUE: be verbose}
 
-\item{tic}{a boolean, if TRUE print the time taken to remove the genes}
+\item{tic}{Boolean. TRUE: show the running time}
 }
 \value{
-a Seurat object
+the Seurat object without the genes in the specified geneset
 }
 \description{
 Remove gene set from a Seurat object

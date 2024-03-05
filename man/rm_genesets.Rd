@@ -7,12 +7,18 @@
 rm_genesets(so, params, verbose = TRUE, tic = TRUE)
 }
 \arguments{
-\item{so}{a Seurat object}
+\item{so}{the Seurat object}
 
-\item{params}{parameters, either a list or environment.
-"RIBO" and the value is 'rm', then the corresponding gene set is
-removed}
+\item{params}{List or Environment. Parameters}
+
+\item{verbose}{Boolean. TRUE: be verbose}
+
+\item{tic}{Boolean. TRUE: show the running time}
+}
+\value{
+the Seurat object without the genes in the specified genesets
 }
 \description{
-Remove multiple genesets based on a list of parameters
+It calls rm_geneset for each geneset in the parameters list or env,
+where a parameter is called after a geneset and its value is 'rm'
 }

@@ -4,14 +4,18 @@
 \alias{cc_phase_plot}
 \title{Create a plot of cell cycle phases}
 \usage{
-cc_phase_plot(so, sample = NULL)
+cc_phase_plot(so, sample = NULL, outfile = NULL)
 }
 \arguments{
 \item{so}{Seurat object}
 
-\item{sample}{Sample name (optional) if the Seurat object contains
-multiple samples, only the specified sample is considered;
+\item{sample}{Sample name (optional)
+if provided: process only specified sample
 default: consider all samples}
+
+\item{outfile}{Output file (optional)
+if provided: save the plot to the file
+default: return the plot, but do not save it to file}
 }
 \value{
 ggplot2 object
