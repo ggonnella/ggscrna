@@ -213,12 +213,12 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #'
 consolidate_features <- function(so, features_to_sum, new_feature_name) {
   for (assay in names(so@assays)) {
-    for (slot in c("counts", "data", 'scale.data')) {
-      if (slot %in% slotNames(so@assays[[assay]])) {
-        matrix <- GetAssayData(object = so, slot = slot, assay = assay)
+    for (layer in c("counts", "data", 'scale.data')) {
+      if (layer %in% Layers(so@assays[[assay]])) {
+        matrix <- GetAssayData(object = so, layer = layer, assay = assay)
         new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
                                               new_feature_name)
-        SetAssayData(so, slot = slot, assay = assay, new.data = new_matrix)
+        SetAssayData(so, layer = layer, assay = assay, new.data = new_matrix)
       }
     }
   }

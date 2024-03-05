@@ -52,7 +52,7 @@ consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label) {
   if (length(rows_to_sum) == 0)
     return(matrix)
 
-  summed_rows <- rowSums(as.matrix(matrix[rows_to_sum, ], drop=FALSE))
+  summed_rows <- colSums(as.matrix(matrix[rows_to_sum, ], drop=FALSE))
   new_matrix <- matrix[!rownames(matrix) %in% rows_to_sum, ]
   new_matrix <- rbind(new_matrix, summed_rows)
   rownames(new_matrix)[nrow(new_matrix)] <- consolidated_label
