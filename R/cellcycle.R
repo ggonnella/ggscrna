@@ -18,7 +18,8 @@
 #'
 id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
                         verbose = TRUE, tic = TRUE, plot = FALSE) {
-  if (tic) { tic("Identifying cell cycle phases") }
+  if (tic)
+    tic("Identifying cell cycle phases")
 
   so_copy <- Seurat::NormalizeData(so, assay = "RNA")
   so_copy <- Seurat::CellCycleScoring(so_copy,
@@ -30,9 +31,12 @@ id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
   so$S.Score   <- so_copy$S.Score
   so$G2M.Score <- so_copy$G2M.Score
 
-  if (verbose) { print(cc_phase_table(so)) }
-  if (plot)    { print(cc_phase_plot(so))  }
-  if (tic)     { toc()                     }
+  if (verbose)
+    print(cc_phase_table(so))
+  if (plot)
+    print(cc_phase_plot(so))
+  if (tic)
+    toc()
 
   so
 }
@@ -41,17 +45,16 @@ id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
 #'
 #' @noRd
 .chkavail_phase <- function(so) {
-  if (!"Phase" %in% colnames(so@meta.data)) {
+  if (!"Phase" %in% colnames(so@meta.data))
     stop("Phase not found in metadata. Run id_cc_phase first.")
-  }
 }
 
 #' Check that a sample exists and extract it
 #'
 .extract_subsample <- function(so, sample) {
-    if (!sample %in% so$sample)
-      stop(paste0("Sample ", sample, " not found in Seurat object"))
-    subset(so, sample == sample)
+  if (!sample %in% so$sample)
+    stop(paste0("Sample ", sample, " not found in Seurat object"))
+  subset(so, sample == sample)
 }
 
 #' Compile a table of cell cycle phases
@@ -60,10 +63,13 @@ id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
 #' @param sample  Sample name (optional)
 #'                if provided: process only specified sample
 #'                default: consider all samples
+#' @param outfile  Output file (optional)
+#'                 if provided: save the table to the file
+#'                 default: return the table, but do not save it to file
 #' 
 #' @return        Character vector with the table
 #'
-cc_phase_table <- function(so, sample = NULL) {
+cc_phase_table <- function(so, sample = NULL, outfile = NULL) {
   .chkavail_phase(so)
   if (!is.null(sample))
     so <- .extract_subsample(so, sample)
@@ -78,6 +84,9 @@ cc_phase_table <- function(so, sample = NULL) {
     perc = paste0(perc, "%")
     result <- c(result, paste0(phase, "\t", total, "\t", perc))
   }
+
+  if (!is.null(outfile))
+    writeLines(result, outfile)
 
   result
 }
