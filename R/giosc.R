@@ -132,3 +132,27 @@ so_extract_sample <- function(so, sample) {
     stop(paste0("Sample ", sample, " not found in Seurat object"))
   subset(so, sample == sample)
 }
+
+#' Read multiple Seurat Objects from RDS for each sample in a samples_sheet
+#' 
+#' @param samples_sheet        String. Path to the samples sheet
+#' @param samples_sheet_idcol  String. Column name of the sample ID in the sheet
+#' @param file_pfx             String. Prefix of the RDS files
+#' @param file_sfx             String. Suffix of the RDS files
+#' @param verbose              (optional) Boolean. Whether to print the sample IDs
+#'                             Defaults to FALSE
+#' 
+#' @return                     List of Seurat objects
+#' 
+read_samples_rds <- function(samples_sheet, samples_sheet_idcol, file_pfx, file_sfx,
+                             verbose=FALSE) {
+  sampleIDs <- get_sample_IDs(samples_sheet, column=samples_sheet_idcol)
+  so_list <- list()
+  for (sampleID in sampleIDs) {
+    rds_file <- paste0(file_pfx, sampleID, file_sfx)
+    so_list[[sampleID]] <- readRDS(rds_file)
+    if (verbose)
+      print(paste0("Read Seurat object from file '", rds_file, "'for sample: '", sampleID, "'"))
+  }
+  so_list
+}
