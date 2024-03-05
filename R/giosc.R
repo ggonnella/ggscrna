@@ -196,3 +196,29 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 
   so
 }
+
+#' Consolidate multiple features of a Seurat object
+#' 
+#' @param so               Seurat object
+#' @param features_to_sum  Vector of strings. The names of the features to sum
+#' @param new_feature_name String. The name of the new feature
+#' 
+#' @return                 Seurat object with the specified features summed
+#'
+#' Note: the function does not handle integrated data; re-run the integration
+#'       after consolidating the features
+#'
+considate_features <- function(so, features_to_sum, new_feature_name) {
+  for (assay in names(so@assays)) {
+    for (slot in c("counts", "data", 'scale.data')) {
+      if (slot %in% slotNames(so@assays[[assay]])) {
+        matrix <- GetAssayData(object = so, slot = slot, assay = assay)
+        new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
+                                              new_feature_name)
+        SetAssayData(so, slot = slot, assay = assay, new.data = new_matrix)
+      }
+    }
+  }
+
+  so
+}
