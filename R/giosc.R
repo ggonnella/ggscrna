@@ -190,7 +190,7 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
   genes <- paste0("Gene", seq_len(num_genes))
   rownames(counts) <- genes
 
-  samples <- rep(paste0("Sample", seq_len(num_samples), each = num_cells_per_sample))
+  samples <- rep(paste0("Sample", seq_len(num_samples)), each = num_cells_per_sample)
   cell_names <- paste0("Cell", seq_len(total_cells), '_', samples)
   colnames(counts) <- cell_names
 
