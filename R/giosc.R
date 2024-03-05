@@ -211,7 +211,7 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #' Note: the function does not handle integrated data; re-run the integration
 #'       after consolidating the features
 #'
-considate_features <- function(so, features_to_sum, new_feature_name) {
+consolidate_features <- function(so, features_to_sum, new_feature_name) {
   for (assay in names(so@assays)) {
     for (slot in c("counts", "data", 'scale.data')) {
       if (slot %in% slotNames(so@assays[[assay]])) {
