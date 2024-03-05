@@ -3,87 +3,111 @@
 #'
 
 # Licence: CC-BY-SA
-# (c) Giorgio Gonnella, 2023
+# (c) Giorgio Gonnella, 2023-2024
 
-geneset_rx <- list()
-geneset_rx$TCR  <- "^TR[AB][VC]"
-geneset_rx$BCR  <- "^IG[HKL][VC]"
-geneset_rx$MT   <- "^MT-"
-geneset_rx$RIBO <- "^M?RP.*"
+genesets <- c("TCR", "BCR", "MT", "RIBO")
+
+regex_geneset <- list()
+regex_geneset$TCR  <- "^TR[AB][VC]"
+regex_geneset$BCR  <- "^IG[HKL][VC]"
+regex_geneset$MT   <- "^MT-"
+regex_geneset$RIBO <- "^M?RP.*"
 
 #' Identify genes in a gene set
 #'
-#' @param so a Seurat object
-#' @param geneset_name a string, one of "TCR", "BCR", "MT", "RIBO"
-#' @param verbose a boolean, if TRUE print the number of genes in the set
-#' @param tic a boolean, if TRUE print the time taken to identify the genes
-#' @return a vector of gene names
+#' @param so            the Seurat object
+#' @param geneset_name  String. Geneset name
+#'                      it must be one of the elements of 'genesets'
+#' @param verbose       Boolean. TRUE: be verbose
+#' @param tic           Boolean. TRUE: show the running time
+#' 
+#' @return              Vector. Gene names
 #'
 id_geneset <- function(so, geneset_name, verbose=TRUE, tic=FALSE) {
-  if (tic) { tic(paste("Identifying", geneset_name, "genes")) }
-  if (!is(so, "Seurat")) {
+  if (tic)
+    tic(paste("Identifying", geneset_name, "genes"))
+
+  if (!is(so, "Seurat"))
     stop("so must be a Seurat object")
-  }
-  if (!geneset_name %in% names(geneset_rx)) {
-    stop(paste("geneset_name must be one of", names(geneset_rx)))
-  }
-  rx <- geneset_rx[[geneset_name]]
-  geneset <- grep(rx, rownames(so), value = TRUE)
-  if (verbose) {
-    print(paste("Number of", geneset_name, "genes:", length(geneset)))
-  }
-  if (tic) { toc() }
-  geneset
+
+  if (!geneset_name %in% genesets)
+    stop(paste("geneset_name must be one of", genesets))
+
+  genes <- grep(regex_geneset[[geneset_name]], rownames(so), value = TRUE)
+
+  if (verbose)
+    print(paste("Number of", genes_name, "genes:", length(genes)))
+
+  if (tic)
+    toc()
+
+  genes
 }
 
 #' Remove gene set from a Seurat object
 #'
-#' @param so a Seurat object
-#' @param geneset_name a string, one of "TCR", "BCR", "MT", "RIBO"
-#' @param verbose a boolean, if TRUE print the number of genes in the set
-#' @param tic a boolean, if TRUE print the time taken to remove the genes
-#' @return a Seurat object
+#' @param so            the Seurat object
+#' @param geneset_name  String. Geneset name
+#'                      it must be one of the elements of 'genesets'
+#' @param verbose       Boolean. TRUE: be verbose
+#' @param tic           Boolean. TRUE: show the running time
+#' 
+#' @return              the Seurat object without the genes in the specified geneset
 #'
 rm_geneset <- function(so, geneset_name, verbose=TRUE, tic=FALSE) {
-  if (tic) { tic(paste("Identifying", geneset_name, "genes")) }
-  if (!is(so, "Seurat")) {
+  if (tic)
+    tic(paste("Remove", geneset_name, "genes"))
+
+  if (!is(so, "Seurat"))
     stop("so must be a Seurat object")
-  }
-  geneset <- id_geneset(so, geneset_name, verbose=verbose, tic=FALSE)
-  if (length(geneset) > 0) {
-    so <- so[!rownames(so) %in% geneset,]
-    if (verbose) {
-      print(paste("Removed", length(geneset), geneset_name, "genes"))
-    }
+
+  if (!geneset_name %in% genesets)
+    stop(paste("geneset_name must be one of", genesets))
+
+  genes <- id_genes(so, geneset_name, verbose=verbose, tic=FALSE)
+  if (length(genes) > 0) {
+    so <- so[!rownames(so) %in% genes,]
+    if (verbose)
+      print(paste("Removed", length(genes), geneset_name, "genes"))
   } else {
-    if (verbose) {
+    if (verbose)
       print(paste("No", geneset_name, "genes found"))
-    }
   }
-  if (tic) { toc() }
+
+  if (tic)
+    toc()
+
   so
 }
 
 #' Remove multiple genesets based on a list of parameters
+#' 
+#' It calls rm_geneset for each geneset in the parameters list or env,
+#' where a parameter is called after a geneset and its value is 'rm'
 #'
-#' @param so a Seurat object
-#' @param params parameters, either a list or environment.
-#            if an element is one of "TCR", "BCR", "MT",
-#'           "RIBO" and the value is 'rm', then the corresponding gene set is
-#'           removed
+#' @param so       the Seurat object
+#' @param params   List or Environment. Parameters
+#' @param verbose  Boolean. TRUE: be verbose
+#' @param tic      Boolean. TRUE: show the running time
+#' 
+#' @return         the Seurat object without the genes in the specified genesets
+#'
 rm_genesets <- function(so, params, verbose=TRUE, tic=TRUE) {
-  if (tic) { tic("Removing genesets") }
-  if (!is(so, "Seurat")) {
+  if (tic)
+    tic("Removing genesets")
+
+  if (!is(so, "Seurat"))
     stop("so must be a Seurat object")
-  }
-  for (geneset_name in names(geneset_rx)) {
-    if (!geneset_name %in% names(params)) {
+
+  for (geneset_name in genesets) {
+    if (!geneset_name %in% names(params))
       next
-    }
-    if (params[[geneset_name]] == "rm") {
+    if (params[[geneset_name]] == "rm")
       so <- rm_geneset(so, geneset_name, verbose=verbose, tic=FALSE)
-    }
   }
-  if (tic) { toc() }
+
+  if (tic)
+    toc()
+
   so
 }
