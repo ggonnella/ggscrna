@@ -37,3 +37,25 @@ get_step_dir <- function(steps_dir, step_n) {
   paste0(steps_dir, "/", matching_files[1], "/")
 }
 
+#' Consolidate rows of a matrix
+#' 
+#' @param matrix              Matrix. The matrix to be consolidated
+#' @param rows_to_sum         Vector of strings. The row names to be summed
+#' @param consolidated_label  String. The label of the consolidated row
+#' 
+#' @return                    Matrix with the specified rows summed and the
+#'                            consolidated row added at the end. The rows in
+#'                            rows_to_sum are removed from the matrix.
+#' 
+consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label) {
+  rows_to_sum <- rows_to_sum[rows_to_sum %in% rownames(matrix)]
+  if (length(rows_to_sum) == 0)
+    return(matrix)
+
+  summed_rows <- rowSums(as.matrix(matrix[rows_to_sum, ], drop=FALSE))
+  new_matrix <- matrix[!rownames(matrix) %in% rows_to_sum, ]
+  new_matrix <- rbind(new_matrix, summed_rows)
+  rownames(new_matrix)[nrow(new_matrix)] <- consolidated_label
+
+  new_matrix
+}
