@@ -29,4 +29,5 @@ Imports:
   robustbase,
   withr,
   grDevices,
-  tictoc
+  tictoc,
+  Matrix
