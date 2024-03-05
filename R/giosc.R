@@ -121,3 +121,14 @@ merge_seurat_list <- function(so_list, order=NULL, freemem=TRUE) {
   so
 }
 
+#' Check that a sample exists and extract it
+#'
+#' @param so          Seurat object
+#' @param samplename  String. Sample name
+#' 
+#' @return           Seurat object with only the cells of the specified sample
+so_extract_sample <- function(so, sample) {
+  if (!sample %in% so$sample)
+    stop(paste0("Sample ", sample, " not found in Seurat object"))
+  subset(so, sample == sample)
+}
