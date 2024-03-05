@@ -14,7 +14,9 @@
 #' @param samples_sheet String. Path to the TSV file
 #' @param column String. Column containing the sample IDs
 #' @param verbose Boolean. Whether to print the sample sheet and the IDs.
+#' 
 #' @return data.frame. The sample sheet.
+#' 
 #' @examples
 #'   samples_sheet <- read_samples_sheet("~/project/samples.tsv", "PatientID")
 #'
@@ -29,6 +31,7 @@ read_samples_sheet <- function(filename, column="SampleID", verbose=TRUE) {
     print(paste("Sample sheet:", samples_sheet))
     print(samples_metadata)
   }
+
   samples_metadata
 }
 
@@ -42,25 +45,26 @@ read_samples_sheet <- function(filename, column="SampleID", verbose=TRUE) {
 #'                      data.frame: the sample sheet
 #' @param column String. Column containing the sample IDs
 #' @param verbose Boolean. Whether to print the sample sheet and the IDs.
+#' 
 #' @return Vector of strings. IDs of the samples.
+#' 
 #' @examples
 #'   samples <- get_sample_IDs("~/project/samples.tsv", "PatientID")
 #'
 get_sample_IDs <- function(samples_sheet, column="SampleID", verbose=TRUE) {
   if (is.character(samples_sheet)) {
     samples_metadata <- read_samples_sheet(samples_sheet, column, verbose)
-  }
-  else {
-    if (!is.data.frame(samples_sheet)) {
+  } else {
+    if (!is.data.frame(samples_sheet))
       stop("samples_sheet must be a data.frame or a string")
-    }
     samples_metadata <- samples_sheet
   }
   samples <- subset(samples_metadata, select = c(column))
   samples <- samples[[1]]
-  if (verbose) {
+
+  if (verbose)
     print(paste("Samples:", paste(samples, collapse=", ")))
-  }
+
   samples
 }
 
