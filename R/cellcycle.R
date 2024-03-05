@@ -40,7 +40,7 @@ id_cc_phase <- function(so, genes = Seurat::cc.genes.updated.2019,
 #' Check that the phase metadata is available
 #'
 #' @noRd
-chkavail_phase <- function(so) {
+.chkavail_phase <- function(so) {
   if (!"Phase" %in% colnames(so@meta.data)) {
     stop("Phase not found in metadata. Run id_cc_phase first.")
   }
@@ -48,7 +48,7 @@ chkavail_phase <- function(so) {
 
 #' Check that a sample exists and extract it
 #'
-extract_subsample <- function(so, sample) {
+.extract_subsample <- function(so, sample) {
     if (!sample %in% so$sample)
       stop(paste0("Sample ", sample, " not found in Seurat object"))
     subset(so, sample == sample)
@@ -64,9 +64,9 @@ extract_subsample <- function(so, sample) {
 #' @return        Character vector with the table
 #'
 cc_phase_table <- function(so, sample = NULL) {
-  chkavail_phase(so)
+  .chkavail_phase(so)
   if (!is.null(sample))
-    so <- extract_subsample(so, sample)
+    so <- .extract_subsample(so, sample)
 
   result <- character()
   result <- c(result, "# Number of cells in each cell cycle phase")
@@ -95,9 +95,9 @@ cc_phase_table <- function(so, sample = NULL) {
 #' @return         ggplot2 object
 #'
 cc_phase_plot <- function(so, sample = NULL, outfile = NULL) {
-  chkavail_phase(so)
+  .chkavail_phase(so)
   if (!is.null(sample))
-    so <- extract_subsample(so, sample)
+    so <- .extract_subsample(so, sample)
 
   # preprocess and create PCA
   so_copy <- Seurat::FindVariableFeatures(so, selection.method = "vst",
