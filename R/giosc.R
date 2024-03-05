@@ -218,7 +218,7 @@ consolidate_features <- function(so, features_to_sum, new_feature_name) {
         matrix <- GetAssayData(object = so, layer = layer, assay = assay)
         new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
                                               new_feature_name, keep_length = TRUE)
-        SetAssayData(so, layer = layer, assay = assay, new.data = new_matrix)
+        so <- SetAssayData(so, layer = layer, assay = assay, new.data = new_matrix)
       }
     }
   }
