@@ -42,10 +42,15 @@ get_step_dir <- function(steps_dir, step_n) {
 #' @param matrix              Matrix. The matrix to be consolidated
 #' @param rows_to_sum         Vector of strings. The row names to be summed
 #' @param consolidated_label  String. The label of the consolidated row
+#' @param keep_length         Logical. Default: FALSE.
+#'                            FALSE: the row with the summed counts is added
+#'                                   to the bottom of the matrix and the rows
+#'                                   which were summed are removed.
+#'                            TRUE: the first row of the rows_to_sum is replaced
+#'                                  with the summed counts; all counts of the other rows which were
+#'                                  summed are set to 0 and their names are prepended with "Removed"
 #' 
-#' @return                    Matrix with the specified rows summed and the
-#'                            consolidated row added at the end. The rows in
-#'                            rows_to_sum are removed from the matrix.
+#' @return                    Matrix; see keep_length param to understand the possible outputs
 #' 
 consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label) {
   rows_to_sum <- rows_to_sum[rows_to_sum %in% rownames(matrix)]
@@ -53,9 +58,22 @@ consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label) {
     return(matrix)
 
   summed_rows <- colSums(as.matrix(matrix[rows_to_sum, ], drop=FALSE))
-  new_matrix <- matrix[!rownames(matrix) %in% rows_to_sum, ]
-  new_matrix <- rbind(new_matrix, summed_rows)
-  rownames(new_matrix)[nrow(new_matrix)] <- consolidated_label
+  
+  if (keep_length) {
+    # replace the first row of rows_to_sum with the sum
+    repl_name <- rows_to_sum[1]
+    rownames(summed_rows) <- repl_name
+    new_matrix <- matrix
+    new_matrix[repl_name, ] <- summed_rows
+
+    # reset the counts to zero for the other rows
+    new_matrix[rows_to_sum[-1], ] <- 0
+    rownames(new_matrix)[rows_to_sum[-1]] <- paste0("Removed", rownames(new_matrix)[rows_to_sum[-1]])
+  } else {
+    new_matrix <- matrix[!rownames(matrix) %in% rows_to_sum, ]
+    new_matrix <- rbind(new_matrix, summed_rows)
+    rownames(new_matrix)[nrow(new_matrix)] <- consolidated_label
+  }
 
   new_matrix
 }
