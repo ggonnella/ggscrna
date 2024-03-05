@@ -62,9 +62,9 @@ consolidate_matrix_rows <- function(matrix, rows_to_sum, consolidated_label, kee
   if (keep_length) {
     # replace the first row of rows_to_sum with the sum
     repl_name <- rows_to_sum[1]
-    rownames(summed_rows) <- repl_name
     new_matrix <- matrix
     new_matrix[repl_name, ] <- summed_rows
+    rownames(new_matrix)[repl_name] <- consolidated_label
 
     # reset the counts to zero for the other rows
     new_matrix[rows_to_sum[-1], ] <- 0
