@@ -174,9 +174,6 @@ read_samples_rds <- function(samples_sheet, samples_sheet_idcol, file_pfx, file_
 create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
                            low_expr_part = 0.8, low_avg = 2, high_avg = 20) {
   total_cells <- num_cells_per_sample * num_samples
-  genes <- paste0("Gene", seq_len(num_genes))
-  samples <- rep(paste0("Sample", seq_len(num_samples), each = num_cells_per_sample))
-  cell_names <- paste0("Cell", seq_len(total_cells), '_', samples)
 
   n_low_expr <- round(num_genes * low_expr_part)
   counts_low <- matrix(rpois(n_low_expr * total_cells, low_avg), 
@@ -190,9 +187,15 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
   counts <- rbind(counts_low, counts_high)
   counts = counts[sample(nrow(counts)), ]
 
+  genes <- paste0("Gene", seq_len(num_genes))
+  rownames(counts) <- genes
+
+  samples <- rep(paste0("Sample", seq_len(num_samples), each = num_cells_per_sample))
+  cell_names <- paste0("Cell", seq_len(total_cells), '_', samples)
+  colnames(counts) <- cell_names
+
   so <- CreateSeuratObject(counts = counts, project = "TestData")
-  rownames(so) <- genes
-  colnames(so) <- cell_names
+  so$sample <- samples
 
   so
 }
