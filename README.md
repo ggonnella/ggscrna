@@ -6,7 +6,7 @@ used for the analysis of ScRNA-seq data and related techniques.
 ## Installation
 ```
 library(devtools)
-devtools::install_github(repo = 'ggonnella/giosc', dependencies = TRUE, upgrade = 'always')
+devtools::install_github(repo = 'ggonnella/giosc', dependencies = TRUE)
 ```
 
 ## Usage
