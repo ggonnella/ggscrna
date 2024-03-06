@@ -218,7 +218,7 @@ consolidate_features <- function(so, features_to_sum, new_feature_name, assay = 
   matrix <- GetAssayData(object = so, layer = layer, assay = assay)
   new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
                                         new_feature_name, keep_length = TRUE)
-  metadata <- as.data.frame(so@metadata)
+  metadata <- as.data.frame(so@meta.data)
   result <- CreateSeuratObject(counts = new_matrix, assay = assay, meta.data = metadata, project = so$project)
 
   result
