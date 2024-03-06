@@ -203,8 +203,12 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #' Consolidate multiple features of a Seurat object
 #' 
 #' @param so               Seurat object
-#' @param features_to_sum  Vector of strings. The names of the features to sum
+#' @param features_to_sum  Vector of strings. The names of the features to sum.
+#'                         OR:
+#'                         List of vectors of strings. Multiple sets of features to consolidate.
 #' @param new_feature_name String. The name of the new feature
+#'                         OR, when features_to_sum is a list of vectors:
+#'                         Vector of strings. The names of the new features, same length as features_to_sum.
 #' @param assay            String. Name of the assay to use.
 #' @param layer            String. Name of the layer to use.
 #' 
@@ -216,8 +220,18 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #'
 consolidate_features <- function(so, features_to_sum, new_feature_name, assay = "RNA", layer = "counts") {
   matrix <- GetAssayData(object = so, layer = layer, assay = assay)
-  new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
-                                        new_feature_name)
+  if (is.list(features_to_sum)) {
+    if (length(features_to_sum) != length(new_feature_name))
+      stop("Length of features_to_sum and new_feature_name must be the same")
+    new_matrix <- matrix
+    for (i in seq_along(features_to_sum)) {
+      new_matrix <- consolidate_matrix_rows(new_matrix, features_to_sum[[i]],
+                                            new_feature_name[i])
+    }
+  } else {
+    new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
+                                          new_feature_name)
+  }
   result <- CreateSeuratObject(counts = new_matrix, assay = assay,
                                meta.data = as.data.frame(so@meta.data),
                                project = so@project.name)
