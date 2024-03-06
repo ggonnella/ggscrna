@@ -205,6 +205,8 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #' @param so               Seurat object
 #' @param features_to_sum  Vector of strings. The names of the features to sum
 #' @param new_feature_name String. The name of the new feature
+#' @param assay            String. Name of the assay to use.
+#' @param layer            String. Name of the layer to use.
 #' 
 #' @return                 Seurat object with the specified features summed
 #'
@@ -216,7 +218,7 @@ consolidate_features <- function(so, features_to_sum, new_feature_name, assay = 
   matrix <- GetAssayData(object = so, layer = layer, assay = assay)
   new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
                                         new_feature_name, keep_length = TRUE)
-  metadata <- as.data.frame(so$metadata)
+  metadata <- as.data.frame(so@metadata)
   result <- CreateSeuratObject(counts = new_matrix, assay = assay, meta.data = metadata, project = so$project)
 
   result
