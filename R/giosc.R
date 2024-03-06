@@ -217,7 +217,7 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 consolidate_features <- function(so, features_to_sum, new_feature_name, assay = "RNA", layer = "counts") {
   matrix <- GetAssayData(object = so, layer = layer, assay = assay)
   new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
-                                        new_feature_name, keep_length = TRUE)
+                                        new_feature_name)
   result <- CreateSeuratObject(counts = new_matrix, assay = assay,
                                meta.data = as.data.frame(so@meta.data),
                                project = so@project.name)
