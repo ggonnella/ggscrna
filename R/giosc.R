@@ -208,20 +208,16 @@ create_test_so <- function(num_genes, num_cells_per_sample, num_samples,
 #' 
 #' @return                 Seurat object with the specified features summed
 #'
-#' Note: the function does not handle integrated data; re-run the integration
-#'       after consolidating the features
+#' Note: the consolidation is done by creating a new object to which the counts and metadata
+#'       are copied. Only a single assay and layer is copied. The rest is not included in the 
+#'       constructed so 
 #'
-consolidate_features <- function(so, features_to_sum, new_feature_name) {
-  for (assay in names(so@assays)) {
-    for (layer in c("counts", "data", 'scale.data')) {
-      if (layer %in% Layers(so@assays[[assay]])) {
-        matrix <- GetAssayData(object = so, layer = layer, assay = assay)
-        new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
-                                              new_feature_name, keep_length = TRUE)
-        so <- SetAssayData(so, layer = layer, assay = assay, new.data = new_matrix)
-      }
-    }
-  }
+consolidate_features <- function(so, features_to_sum, new_feature_name, assay = "RNA", layer = "counts") {
+  matrix <- GetAssayData(object = so, layer = layer, assay = assay)
+  new_matrix <- consolidate_matrix_rows(matrix, features_to_sum,
+                                        new_feature_name, keep_length = TRUE)
+  metadata <- as.data.frame(so$metadata)
+  result <- CreateSeuratObject(counts = new_matrix, assay = assay, meta.data = metadata, project = so$project)
 
-  so
+  result
 }
